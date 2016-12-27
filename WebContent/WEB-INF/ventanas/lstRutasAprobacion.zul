@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?variable-resolver class="org.zkoss.zkplus.spring.DelegatingVariableResolver"?>
+
+<?init class="org.zkoss.zkplus.databind.AnnotateDataBinderInit" arg0="./lstRutasAprobacion"?>
+<zk xmlns:n="http://www.zkoss.org/2005/zk/native">
+
+	<zscript src="/WEB-INF/commons/configureContext.zs" />
+	<zscript src="/WEB-INF/commons/configureSecurity.zs" />
+	<zscript>
+	<![CDATA[
+		List all_objetos = new ArrayList();
+		List areas = new ArrayList();
+		List subareas = new ArrayList();
+		org.modelo.dto.Area areaNueva = new org.modelo.dto.Area();
+		areaNueva.setNombre("Ninguna");
+		areas.add(areaNueva);
+		areas.addAll(servicioAdministrarConfiguracion.buscarAreasTodas());
+		
+		List tiposDocs = new ArrayList();
+		org.modelo.dto.TipoDocumento tipNuevo = new org.modelo.dto.TipoDocumento();
+		tipNuevo.setNombre("Ninguno");
+		tiposDocs.add(tipNuevo);
+		tiposDocs.addAll(servicioAdministrarConfiguracion.buscarTiposDocumentosTodos());
+
+	]]>
+	</zscript>
+	<panel title="Rutas de Aprobacion" id="lstRutasAprobacion" height="100%" border="normal" closable="true" >
+		<toolbar mold="default" style="background:#635fa8;">
+			<hbox align="center" style="background:#FFFFFF;">
+				<label value="Area: "></label>
+				<combobox id="cmbarea" model="@{areas}" readonly="true">
+					<attribute name="onSelect">
+						<![CDATA[
+							org.modelo.dto.Area areaSel =  cmbarea.getSelectedItem().getValue();
+							
+							if (areaSel.getSubAreas().size() > 0)
+							{
+								lblSubArea.setVisible(true);
+								cmbsubarea.setVisible(true);
+								subareas.clear();
+								org.modelo.dto.Area sareaNueva = new org.modelo.dto.Area();
+								sareaNueva.setNombre("Ninguna");
+								subareas.add(sareaNueva);
+								
+								subareas.addAll(areaSel.getSubAreas());
+								binder.loadAll();
+							}
+							else
+							{
+								lblSubArea.setVisible(false);
+								cmbsubarea.setVisible(false);
+							}
+						]]>
+					</attribute>
+					<comboitem self="@{each=are}" label="@{are.nombre}" value="@{are}"/>
+				</combobox>
+				<label id="lblSubArea" value="Sub Area: " visible="false"></label>
+				<combobox id="cmbsubarea" model="@{subareas}" readonly="true" visible="false">
+					<comboitem self="@{each=sare}" label="@{sare.nombre}" value="@{sare}"/>
+				</combobox>
+				<label value="Tipo Documento: "></label>
+				<combobox id="cmbtipo" model="@{tiposDocs}" readonly="true">
+					<comboitem self="@{each=tip}" label="@{tip.nombre}" value="@{tip}"/>
+				</combobox>
+				<button label="Buscar" image="/images/buscar.png">
+					<attribute name="onClick">
+						<![CDATA[
+							doLoadData();
+						]]>
+					</attribute>
+				</button>
+			</hbox>
+			<separator></separator>
+			<button label="${labels.nueva} ${labels.rutaDeAprobacion}" image="/images/incluir.png"  id="Incluir" >
+				<attribute name="onClick">
+					<![CDATA[
+						Object objeto = new org.modelo.dto.RutaAprobacion();
+						Map parametros = new HashMap();
+						parametros.put("modo","N");
+						parametros.put("objeto",objeto);
+						Window window = (Window)Executions.createComponents("/WEB-INF/ventanas/editRutaAprobacion.zul", null,parametros);
+						window.doModal();
+						if (window.getAttribute("accion").equals("A"))
+						{
+							all_objetos.clear();
+							doLoadData();
+						}
+						
+					]]>
+				</attribute>
+			</button>
+			<button label="${labels.borrar} ${labels.todas} ${labels.rutaDeAprobacion} ${labels.seleccionadas}" image="/images/borrar.png" id="EliminarTodo" >
+				<attribute name="onClick">
+					<![CDATA[
+						Set items = box.getSelectedItems();
+						if (items.size() == 0)
+						{
+							Messagebox.show("Debe Seleccionar Al menos un Registro","Eliminar", Messagebox.OK,Messagebox.INFORMATION);
+						}
+						else
+						{
+							doLoadData();
+						}	
+					]]>
+				</attribute>
+			</button>
+		</toolbar>
+		<panelchildren style="padding : 5px;">
+			<panel title="" height="450px">
+				<panelchildren >
+					<borderlayout>
+						<center autoscroll="true">
+							<listbox id="box" fixedLayout="true" multiple="true" mold="paging" pageSize="20" width="100%" model="@{all_objetos}" 
+							checkmark="true">
+    							<listhead>
+    								<listheader label="" align="center" valign="middle" width="5%" />
+    								<listheader label="Area" align="center" valign="middle" width="40%" />
+									<listheader label="${labels.tipoDeDocumento}" align="center" valign="middle" width="35%" />
+									<listheader label="${labels.cantidadDeAprobadores}" align="center" valign="middle" width="10%" />
+									<listheader label="Ops." align="center" valign="middle" width="10%" />
+    							</listhead>
+    							<listitem sclass="row-border item" self="@{each=objeto}" value="@{objeto}">
+    								<listcell/>
+									<listcell label="@{objeto.pk.area.nombre}"/>
+  									<listcell label="@{objeto.pk.tipoDocumento.nombre}"/>
+  									<listcell>
+  										<attribute name="onCreate">
+  											<![CDATA[
+  												org.modelo.dto.RutaAprobacion ra = ((Listitem)self.getParent()).getValue();
+  												self.setLabel(new Integer(ra.getAprobadores().size()).toString());
+											]]>
+  										</attribute>
+  									</listcell>
+  									<listcell>
+  										<image tooltiptext="${labels.editar} ${labels.rutaDeAprobacion}" src="/images/editar.png" id="Editar" width="18px" height="18px">
+											<attribute name="onClick">
+												<![CDATA[
+													Object objeto = ((Listitem)self.getParent().getParent()).getValue();										
+													Map parametros = new HashMap();
+													parametros.put("modo","E");
+													parametros.put("objeto",objeto);
+													Window window = (Window)Executions.createComponents("/WEB-INF/ventanas/editRutaAprobacion.zul", null,parametros);
+													window.doModal();
+													if (window.getAttribute("accion").equals("A"))
+													{
+														all_objetos.clear();
+														doLoadData();
+													}	
+												]]>
+											</attribute>
+										</image>
+										<image tooltiptext="${labels.borrar} ${labels.rutaDeAprobacion}" src="/images/borrar.png" id="Eliminar" width="18px" height="18px">
+											<attribute name="onClick">
+												<![CDATA[
+													Set items = box.getSelectedItems();
+													if (items.size() == 0)
+													{
+														Messagebox.show("Debe Seleccionar Al menos un Registro","Eliminar", Messagebox.OK,Messagebox.INFORMATION);
+													}
+													else
+													{
+														doLoadData();
+													}	
+												]]>
+											</attribute>
+										</image>
+  									</listcell>
+    							</listitem>
+							</listbox> 				
+						</center>
+					</borderlayout>
+				</panelchildren>
+			</panel>
+		</panelchildren>
+		<zscript src="/WEB-INF/commons/configureSecurity.zs" />
+	</panel>
+	<zscript>
+		<![CDATA[
+			void doLoadData()
+			{
+				all_objetos = servicioAdministrarConfiguracion.buscarRutasAprobacionPorAreaTipo(cmbarea.getSelectedItem() != null ? cmbarea.getSelectedItem().getValue() : cmbarea.getItems().get(0).getValue(), cmbsubarea.getSelectedItem() != null ? cmbsubarea.getSelectedItem().getValue() : cmbsubarea.getItems().get(0).getValue(), cmbtipo.getSelectedItem() != null ? cmbtipo.getSelectedItem().getValue() : cmbtipo.getItems().get(0).getValue());
+				if (all_objetos.size() == 0) 
+					{
+						alert("No Hay Rutas de Aprobacion Incluidas");
+					}
+				binder.loadAll();
+				
+			}
+			all_objetos = servicioAdministrarConfiguracion.buscarRutasAprobacionTodos();
+			binder.loadAll();
+		]]>
+	</zscript>
+</zk>

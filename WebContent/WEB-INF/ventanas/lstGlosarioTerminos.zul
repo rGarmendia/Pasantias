@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?variable-resolver class="org.zkoss.zkplus.spring.DelegatingVariableResolver"?>
+
+<?init class="org.zkoss.zkplus.databind.AnnotateDataBinderInit" arg0="./lstGlosarioTerminos"?>
+<zk xmlns:n="http://www.zkoss.org/2005/zk/native">
+
+	<zscript src="/WEB-INF/commons/configureContext.zs" />
+	<zscript src="/WEB-INF/commons/configureSecurity.zs" />
+	<zscript>
+	<![CDATA[
+		List all_objetos = new ArrayList();
+		Comparator cNombreAsc = new Comparator() {
+			public int compare(org.modelo.dto.Glosario i1, org.modelo.dto.Glosario i2) {
+				if (i1.getNombre() == null || i2.getNombre() == null)
+				{
+					return 0;
+				}
+				else
+				{
+					return i1.getNombre().compareTo(i2.getNombre());
+				}
+			}
+		};
+		Comparator cNombreDes = new Comparator() {
+			public int compare(org.modelo.dto.Glosario i1, org.modelo.dto.Glosario i2) {
+				if (i1.getNombre() == null || i2.getNombre() == null)
+				{
+					return 0;
+				}
+				else
+				{
+					return i1.getNombre().compareTo(i2.getNombre()) * -1;
+				}
+			}
+		};
+		
+		void doLoadData()
+		{
+			all_objetos = servicioAdministrarConfiguracion.buscarTodosTerminosActivos();
+			
+			if (all_objetos.size() == 0) 
+				{
+					alert("No Hay Terminos del Glosario Incluidos");
+				}
+			binder.loadAll();
+		}
+		doLoadData();
+	]]>
+	</zscript>
+	<panel title="Glosario de Terminos" id="lstGlosarioTerminos" height="100%" border="normal" closable="true" >
+		<toolbar mold="default" style="background:#635fa8;">
+			<button label="${labels.nuevo} ${labels.terminoDeGlosario}" image="/images/list_definitionadd.png"  id="Incluir" >
+				<attribute name="onClick">
+					<![CDATA[
+						Object objeto = new org.modelo.dto.Glosario();
+						Map parametros = new HashMap();
+						parametros.put("modo","N");
+						parametros.put("objeto",objeto);
+						Window window = (Window)Executions.createComponents("/WEB-INF/ventanas/editTerminoGlosario.zul", null,parametros);
+						window.doModal();
+						if (window.getAttribute("accion").equals("A"))
+						{
+							all_objetos.clear();
+							doLoadData();
+						}
+						
+					]]>
+				</attribute>
+			</button>
+			<button label="${labels.borrar} ${labels.todos} ${labels.terminoDeGlosario} ${labels.seleccionados}" image="/images/list_definitiondelete.png"  id="EliminarTodos" >
+				<attribute name="onClick">
+					<![CDATA[
+					    if (Messagebox.show("Seguro de Eliminar Todos Los Elementos Seleccionados?", "Eliminar Todos", Messagebox.OK + Messagebox.CANCEL, Messagebox.INFORMATION) == Messagebox.OK)
+					    {
+					    	for (Listitem li : box.getSelectedItems())
+					    	{
+					    		org.modelo.dto.Glosario glosario = li.getValue();
+					    		try
+					    		{
+						    		servicioAdministrarConfiguracion.eliminarGlosario(glosario);
+					    		}
+					    		catch(org.sevenlabs.exception.SevenLabsException e)
+					    		{
+					    			alert(e.getMessage());
+					    		}
+					    	}
+					    	all_objetos.clear();
+							doLoadData();
+					    }
+					]]>
+				</attribute>
+			</button>
+		</toolbar>
+		<panelchildren style="padding : 5px;">
+			<panel title="" height="450px">
+				<panelchildren >
+					<borderlayout>
+						<center autoscroll="true">
+							<vbox>
+								<hbox align="center">
+									<label value="Busqueda: "></label>
+									<textbox cols="60" id="txtBusqueda"></textbox>
+									<button label="Buscar" image="/images/search.png">
+										<attribute name="onClick">
+											<![CDATA[
+											    if (!txtBusqueda.getValue().trim().equals(""))
+											    {	
+											    	all_objetos = servicioAdministrarConfiguracion.buscarTerminosPorNombreActivos(txtBusqueda.getValue().trim());
+													binder.loadAll();
+											    }
+											    else
+											    {
+											    	alert("Debe Insertar un Texto a Buscar");
+											    }
+											]]>
+										</attribute>
+									</button>
+									<button label="Buscar Todos" image="/images/search.png">
+										<attribute name="onClick">
+											<![CDATA[
+												all_objetos = servicioAdministrarConfiguracion.buscarTodosTerminos();
+												binder.loadAll();
+											]]>
+										</attribute>
+									</button>
+								</hbox>
+							<listbox id="box" fixedLayout="true" multiple="true" mold="paging" pageSize="20" width="100%" model="@{all_objetos}" checkmark="true">
+    							<listhead>
+									<listheader align="center" valign="middle" width="3%" />
+									<listheader label="${labels.nombre}" sortAscending="${cNombreAsc}" sortDescending="${cNombreDes}" align="center" valign="middle" width="87%" />
+									<listheader label="Ops." align="center" valign="middle" width="10%" />
+    							</listhead>
+    							<listitem sclass="row-border item" self="@{each=objeto}" value="@{objeto}">
+									<listcell/>
+  									<listcell label="@{objeto.nombre}"/>
+  									<listcell>
+  										<image tooltiptext="${labels.editar} ${labels.terminoDeGlosario}" src="/images/list_definitionedit.png" id="Editar" width="18px" height="18px">
+											<attribute name="onClick">
+												<![CDATA[
+													Object objeto = ((Listitem)self.getParent().getParent()).getValue();										
+													Map parametros = new HashMap();
+													parametros.put("modo","E");
+													parametros.put("objeto",objeto);
+													Window window = (Window)Executions.createComponents("/WEB-INF/ventanas/editTerminoGlosario.zul", null,parametros);
+													window.doModal();
+													if (window.getAttribute("accion").equals("A"))
+													{
+														all_objetos.clear();
+														doLoadData();
+													}	
+												]]>
+											</attribute>
+										</image>
+										<image tooltiptext="${labels.borrar} ${labels.terminoDeGlosario}" src="/images/list_definitiondeleteu.png" id="Eliminar" width="18px" height="18px">
+											<attribute name="onClick">
+												<![CDATA[
+												    try
+												    {
+														Object objeto = ((Listitem)self.getParent().getParent()).getValue();
+														servicioAdministrarConfiguracion.eliminarGlosario(objeto);
+														all_objetos.clear();
+														doLoadData();
+												    }
+												    catch (Exception sle)
+												    {
+												    	alert("No se Puede Eliminar el Termino ya que Esta Siendo Usado");
+												    }
+												]]>
+											</attribute>
+										</image>
+  									</listcell>
+    							</listitem>
+							</listbox>
+							</vbox>
+						</center>
+					</borderlayout>
+				</panelchildren>
+			</panel>
+		</panelchildren>
+		<zscript src="/WEB-INF/commons/configureSecurity.zs" />
+	</panel>
+</zk>

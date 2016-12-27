@@ -1,0 +1,417 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?variable-resolver class="org.zkoss.zkplus.spring.DelegatingVariableResolver"?>
+<?init class="org.zkoss.zkplus.databind.AnnotateDataBinderInit"  arg0="./editUsuario" ?>
+
+<zk xmlns:n="http://www.zkoss.org/2005/zk/native"
+	xmlns:h="http://www.w3.org/1999/xhtml">
+
+	<zscript src="/WEB-INF/commons/configureContext.zs" />
+	<zscript src="/WEB-INF/commons/configureDialog.zs" />
+
+	<zscript>
+	<![CDATA[
+
+org.modelo.dto.Usuario usuari = arg.get("objeto");
+String modo = arg.get("modo");
+String passAntiguo = usuari.password;
+//List roles = new ArrayList();
+//roles.add("Administrador");
+List dias =new ArrayList();
+dias.add("Lunes");
+dias.add("Martes");
+dias.add("Miercoles");
+dias.add("Jueves");
+dias.add("Viernes");
+dias.add("Sabado");
+dias.add("Domingo");
+
+List codigocel=new ArrayList();
+codigocel.add("416");
+codigocel.add("426");
+codigocel.add("412");
+codigocel.add("414");
+codigocel.add("424");
+
+List estatuss= new ArrayList();
+estatuss.add("Activo");
+estatuss.add("Inactivo");
+
+List roles = servicioAdministrarConfiguracion.buscarRolesTodos();
+
+if (modo.equals("N"))
+{
+	usuari.estatus = "Activo";
+	usuari.grupos.add(servicioAdministrarConfiguracion.buscarGrupoGeneral());
+}
+
+
+List usuariosGrupo = new ArrayList(usuari.grupos);
+
+		]]>						
+		
+	</zscript>
+
+	<window id="editUsuario" title="${labels.usuario}" maximizable="false"
+		maximized="false" border="normal" width="750px">
+		<caption image="/images/window.png" />
+		<style src="/css/mystyle.css" dynamic="true" />
+		<div height="85%">
+			<textbox visible="false" />
+			<tabbox>
+				<tabs width="120px">
+					<tab label="${labels.datosGenerales}" />
+					<tab label="${labels.grupos}" />
+				</tabs>
+				<tabpanels>
+					<tabpanel>
+						<grid>
+							<columns>
+								<column width="30%" align="right" />
+								<column width="70%" />
+							</columns>
+							<rows>
+								<row>
+									<label class="obligatorio" value="${labels.rolSistema}" />
+									<label value="@{usuari.rolSistema.nombre}" if="${modo eq 'E' }"/>
+									<combobox id="cmbrol" model="@{roles}" selectedItem="@{usuari.rolSistema}" readonly="true"  if="${modo eq 'N' }">
+										<comboitem self="@{each=rol}" label="@{rol.nombre}" value="@{rol}">
+<!-- 											<attribute name="onCreate"> -->
+<!-- 												<![CDATA[ -->
+<!-- 													if ( ((org.modelo.dto.Rol)self.getValue()).equals(((org.modelo.dto.Usuario)usuari).getRolSistema())) -->
+<!-- 													{ -->
+<!-- 														((Combobox)self.getParent()).setSelectedItem(self); -->
+<!-- 													} -->
+<!-- 												]]> -->
+<!-- 											</attribute> -->
+										</comboitem>
+									</combobox>			
+								</row>
+								<row>
+									<label class="obligatorio" value="${labels.nombreUsuario}" />
+									<textbox maxlength="20" id="login" cols="20" value="@{usuari.login}" if="${modo != 'E'}" />
+									<label value="@{usuari.login}" if="${modo=='E'}"/>
+								</row>
+<!-- 								<row if="${modo != 'E' or usuario.rolSistema.nombre eq 'Administrador'}"> -->
+								<row if="${modo != 'E'}">
+									<label class="obligatorio" value="${labels.contrasenna}" />
+									<textbox maxlength="15" id="pass" cols="15" value="@{usuari.password}"  type="password"/>									
+								</row>
+<!-- 								<row if="${modo != 'E' or usuario.rolSistema.nombre eq 'Administrador'}"> -->
+								<row if="${modo != 'E'}">
+									<label class="obligatorio" value="${labels.recontrasenna}" />
+									<textbox maxlength="15" id="passv" cols="15"  type="password"/>
+								</row>
+								<row>
+									<label class="obligatorio" value="${labels.nombres}" />
+									<textbox id="nombre" maxlength="40" cols="40" value="@{usuari.nombres}"/>
+								</row>
+								<row>
+									<label class="obligatorio" value="${labels.apellidos}" />
+									<textbox  maxlength="40" cols="40" value="@{usuari.apellidos}"/>
+								</row>
+								<row>
+									<label value="${labels.cargo}" />
+									<label value="@{usuari.cargo.titulo}" if="${usuario eq usuari}"/>
+									<vbox if="${usuario ne usuari}">
+										<hbox>
+											<label id="lblcargo" value="@{usuari.cargo.titulo}"/>
+											<button label="${labels.buscar}" image="/images/find.png">
+												<attribute name="onClick">
+													<![CDATA[
+														Map parametros = new HashMap();
+														parametros.put("modo","A");
+														Window window = (Window)Executions.createComponents("/WEB-INF/ventanas/catDescripciones.zul", null,parametros);
+														window.doModal();
+														if (window.getAttribute("accion").equals("A"))
+														{
+															txtCargo.setValue("");
+															org.modelo.dto.Documento doc = window.getAttribute("objeto");
+															usuari.setCargo(doc);
+															lblcargo.setValue("(" + doc.getCodigo() + ") - " + doc.getTitulo());
+															binder.loadAll();
+														}
+													]]>
+												</attribute>
+											</button>
+										</hbox>
+										<hbox if="${modo eq 'N'}" align="center">
+											Cargo: <textbox id="txtCargo" cols="60">
+												<attribute name="onChanging">
+													<![CDATA[
+														usuari.setCargo(null);
+														lblcargo.setValue("");
+													]]>
+												</attribute>
+											</textbox>
+										</hbox>
+									</vbox>
+								</row>
+								<row>
+									<label  value="${labels.celular1}" />
+									<textbox id="txtCelular1" maxlength="15" cols="15" value="@{usuari.celular1}"/>
+									
+								</row>
+<!-- 								<row> -->
+<!-- 									<label value="${labels.celular2}" /> -->
+<!-- 									<textbox id="txtCelular2" maxlength="15" cols="15" value="@{usuari.celular2}"/> -->
+<!-- 								</row> -->
+<!-- 								<row> -->
+<!-- 									<label value="${labels.celular3}" /> -->
+<!-- 									<textbox id="txtCelular3" maxlength="15" cols="15" value="@{usuari.celular3}"/> -->
+<!-- 								</row>		 -->
+<!-- 								<row> -->
+<!-- 									<label value="${labels.celular4}" /> -->
+<!-- 									<textbox id="txtCelular4" maxlength="15" cols="15" value="@{usuari.celular4}"/> -->
+<!-- 								</row> -->
+								<row>
+									<label class="obligatorio" value="${labels.email}" />
+									<textbox id="correo" maxlength="30" cols="30" value="@{usuari.correo}"/>
+								</row>
+<!-- 								<row> -->
+<!-- 									<label class="obligatorio" value="${labels.numeroLicensia}" /> -->
+<!-- 									<textbox id="txtLinceseNumber" maxlength="10" cols="10" value="@{usuari.licenseNumber}"/> -->
+<!-- 								</row> -->
+<!-- 								<row> -->
+<!-- 									<label class="obligatorio" value="${labels.expnumeroLicensia}" /> -->
+<!-- 									<datebox id="dteExpLinceseNumber" value="@{usuari.expirationDate}" format="MM/dd/yyyy"/> -->
+<!-- 								</row> -->
+<!-- 								<row> -->
+<!-- 									<label value="ACLS" /> -->
+<!-- 									<textbox id="txtACLS" maxlength="10" cols="10" value="@{usuari.acls}"/> -->
+<!-- 								</row> -->
+<!-- 								<row> -->
+<!-- 									<label class="obligatorio" value="PAL" /> -->
+<!-- 									<textbox id="txtPAL" maxlength="10" cols="10" value="@{usuari.pal}"/> -->
+<!-- 								</row> -->
+								<row if="${modo eq 'E' and usuario.rolSistema.nombre eq 'Administrator'}">
+									<label value="${labels.reiniciarContrasenna}" />
+									<button label="Reset" image="/images/undo.png" orient="vertical">
+										<attribute name="onClick">
+											<![CDATA[
+												usuari.password = "123456";
+												servicioAdministrarConfiguracion.guardarUsuario(usuari);
+												alert("Password Reiniciado Exitosamente");
+											
+												editUsuario.setAttribute("accion","A");
+												editUsuario.detach();
+											]]>
+											</attribute>
+									</button>
+								</row>
+								<row>
+									<label class="obligatorio" value="${labels.estatus}" />
+									<label value="@{usuari.estatus}" if="${usuari.login eq usuario.login }"/>
+									<combobox id="cmbestatus" model="@{estatuss}" selectedItem="@{usuari.estatus}" value="@{usuari.estatus}" if="${usuari.login ne usuario.login }">
+										<comboitem self="@{each=estatu}" label="@{estatu}" value="@{estatu}"/>
+									</combobox>
+								</row>
+								<row spans="2">
+									<label class="obligatorio" value="${labels.datosObligatorios}" />
+								</row>
+							</rows>
+						</grid>
+                	</tabpanel>
+                	<tabpanel style="overflow:auto">
+						<toolbar mold="default" style="background:#635fa8;">
+							<button label="${labels.agregar} ${labels.grupos}" image="/images/incluir.png"  id="Incluir"  if="${usuario ne usuari}">
+								<attribute name="onClick">
+									<![CDATA[
+										Map parametros = new HashMap();
+										parametros.put("modo","M");
+										Window window = (Window)Executions.createComponents("/WEB-INF/ventanas/catGrupos.zul", null,parametros);
+										window.doModal();
+										if (window.getAttribute("accion").equals("A"))
+										{
+											Set items = window.getAttribute("usuari");
+											for(Listitem li : items)
+											{
+												if (!usuari.getGrupos().contains(li.getValue()))
+												{
+													usuari.getGrupos().add(li.getValue());
+												}
+											}
+											usuariosGrupo = new ArrayList(usuari.grupos);
+											binder.loadAll();
+										}
+										
+									]]>
+								</attribute>
+							</button>
+							<button label="${labels.remover} ${labels.todos} ${labels.grupos} ${labels.seleccionadas}" image="/images/borrar.png" id="EliminarTodo"  if="${usuario ne usuari}">
+								<attribute name="onClick">
+									<![CDATA[	
+									]]>
+								</attribute>
+							</button>
+						</toolbar>
+						<listbox fixedLayout="true" multiple="true" mold="paging" pageSize="20" width="100%" model="@{usuariosGrupo}" checkmark="true">
+    						<listhead>
+    							<listheader width="5%" />
+    							<listheader label="${labels.nombre}" align="center" valign="middle" width="88%" />
+								<listheader label="Ops." align="center" valign="middle" width="7%" />
+    						</listhead>
+    						<listitem sclass="row-border item" self="@{each=objetoli}" value="@{objetoli}">
+    							<attribute name="onCreate">
+									<![CDATA[
+										self.setSelected(false);
+									]]>
+								</attribute>
+    							<listcell/>
+								<listcell label="@{objetoli.nombre}"/>
+  								<listcell>
+  									<attribute name="onClick">
+										<![CDATA[
+											((Listitem)self.getParent()).setSelected(false);
+										]]>
+									</attribute>
+									<image tooltiptext="${labels.remover} ${labels.grupos}" src="/images/borrar.png" id="Eliminar" width="18px" height="18px">
+										<attribute name="onClick">
+											<![CDATA[
+												org.modelo.dto.Grupo gru = ((Listitem)self.getParent().getParent()).getValue();
+												usuari.getGrupos().remove(gru);
+												usuariosGrupo = new ArrayList(usuari.getGrupos());
+												binder.loadAll();
+											]]>
+										</attribute>
+									</image>
+  								</listcell>
+    						</listitem>
+						</listbox>
+                	</tabpanel>
+				</tabpanels>
+			</tabbox>
+		</div>
+		<div align="right" height="15%" style="background:#635fa8">
+			<button id="btnAceptar" label="${labels.aceptar}"
+				image="/images/aceptar.png" orient="vertical">
+				<attribute name="onClick">
+				<![CDATA[
+				String mensaje = "";
+				if (modo.equals("N"))
+				{
+					if (login.getText().trim().equals(""))
+					{
+						mensaje = "Debe Insertar el Nombre de Usuario";
+					}
+					else if (pass.getText().trim().equals(""))
+					{
+						mensaje = "Debe Insertar la Contraseña";
+					}
+					else if (passv.getText().trim().equals(""))
+					{
+						mensaje = "Debe Re-Insertar la Contraseña";					
+					}
+					else if (!pass.getText().equals(passv.getText()))
+					{
+						mensaje = "La Contraseña y la Confirmación Deben Ser Iguales";
+					}
+				}
+				else
+				{
+					if (usuario.rolSistema.nombre.equals("Administrator"))
+					{
+						/*if (!passAntiguo.equals(pass.getText().trim()))
+						{
+							if (!pass.getText().equals(passv.getText()))
+							{
+								mensaje = "La Contraseña y la Confirmación Deben Ser Iguales";
+							}
+						}*/
+					}
+				}
+				
+				if (nombre.getText().trim().equals(""))
+				{
+					mensaje = "Debe Insertar el Nombre Completo";
+				}
+				//else if ( txtCelular1.getText().trim().equals(""))
+				//{
+					//mensaje = "Debe Insertar el 1er Teléfono Celular";
+				//}				
+				//else if (correo.getText().trim().equals(""))
+				//{
+				//	mensaje = "Debe Insertar el Correo Electronico";
+				//}
+				
+				if (usuari.login != null)
+				{
+					if (!usuari.login.equals(usuario.login))
+					{
+						if (modo.equals("N"))
+						{
+							if (cmbrol.getSelectedItem() == null)
+							{
+								mensaje = "Debe Seleccionar un Rol";
+							}
+						}
+						
+						if (cmbestatus.getSelectedItem() == null)
+						{
+							mensaje = "Debe Seleccionar el Estatus";
+						}
+					}
+				}
+
+				if (!mensaje.equals(""))
+				{
+					alert(mensaje);
+				}
+				else
+				{
+					try
+					{	
+						//servicioAdministrarConfiguracion.validarUsuario(usuari);
+						String nombreRol;
+						if (modo.equals("N"))
+						{	
+							servicioAdministrarConfiguracion.verificarUsuarioDuplicado(usuari);
+						}
+						/*if (!veri.equals(""))
+						{
+							alert(veri);
+						}
+						else
+						{*/
+							servicioAdministrarConfiguracion.verificarUsuario(usuari);
+							if (modo.equals("N"))
+							{	
+								if (!txtCargo.getValue().trim().equals(""))
+								{
+									org.modelo.dto.Documento newDocDes = new org.modelo.dto.Documento();
+									newDocDes.setTitulo(txtCargo.getValue().trim());
+									usuari.setCargo(newDocDes);
+								}
+							}
+							servicioAdministrarConfiguracion.guardarUsuario(usuari);
+							alert("Datos Guardados con Exito!!!");
+							
+							editUsuario.setAttribute("accion","A");
+							editUsuario.detach();
+						//}
+					}
+					catch(Exception ex)
+					{
+						Messagebox
+				.show(ex.getMessage(), "Error", Messagebox.OK, Messagebox.ERROR);
+					}
+				}
+				]]>
+				</attribute>
+			</button>
+			<button id="btnCancelar" label="${labels.cancelar}"
+				image="/images/cancelar.png" orient="vertical">
+				<attribute name="onClick">
+				{
+					editUsuario.setAttribute("accion","C");
+					editUsuario.detach();
+				}
+				</attribute>
+			</button>
+		</div>
+
+		<zscript>
+			<![CDATA[
+			]]>	
+		</zscript>
+	</window>
+</zk>

@@ -1,0 +1,786 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?variable-resolver class="org.zkoss.zkplus.spring.DelegatingVariableResolver"?>
+<?init class="org.zkoss.zkplus.databind.AnnotateDataBinderInit"  arg0="./editRutaAprobacionSeguridad" ?>
+
+<zk xmlns:n="http://www.zkoss.org/2005/zk/native"
+	xmlns:h="http://www.w3.org/1999/xhtml">
+
+
+	<zscript src="/WEB-INF/commons/configureContext.zs" />
+	<zscript src="/WEB-INF/commons/configureDialog.zs" />
+
+	<zscript>
+		<![CDATA[
+			org.modelo.dto.RutaAprobacionSeguridad rutaAprobacionSeguridad = arg.get("objeto");
+			String modo = arg.get("modo");
+			List aprobadores = new ArrayList(rutaAprobacionSeguridad.aprobadores);
+			List aprobadoresSolicitud = new ArrayList(rutaAprobacionSeguridad.aprobadoresSolicitud);
+			List usuariosPermiso = new ArrayList(rutaAprobacionSeguridad.usuariosPermiso);
+			List usuariosSeguridad = new ArrayList(rutaAprobacionSeguridad.usuariosSeguridad);
+			List gruposPermiso = new ArrayList(rutaAprobacionSeguridad.gruposPermiso);
+			List gruposSeguridad = new ArrayList(rutaAprobacionSeguridad.gruposSeguridad);
+		]]>						
+	</zscript>
+	<window id="editRutaAprobacionSeguridad" title="Ruta de Aprobacion y Seguridad" maximizable="false" maximized="false" border="normal" width="1050px" height="90%">
+		<caption image="/images/window.png" />
+		<style src="/css/mystyle.css" dynamic="true" />
+		<div height="88%" style="overflow:auto">
+			<textbox visible="false" />
+			<tabbox orient="horizontal">
+				<tabs width="120px">
+					<tab label="${labels.datosGenerales}" />
+					<tab label="${labels.rutaDeAprobacion}" />
+					<tab label="${labels.rutaDeAprobacionDeSolicitud}" />
+					<tab label="${labels.seguridadDeDocumento}" />
+				</tabs>
+				<tabpanels>
+					<tabpanel>
+						<grid>
+							<columns>
+								<column width="25%" align="right" />
+								<column width="75%" />
+							</columns>
+							<rows>
+								<row>
+									<label class="obligatorio" value="${labels.tipoDeDocumento}" />
+									<hbox align="center">
+										<label id="lblTipoDocumento" style="font-weight: bold;" value="@{rutaAprobacionSeguridad.pk.tipoDocumento.nombre}"/>
+										<button label="${labels.buscar}" image="/images/find.png" >
+											<attribute name="onClick">
+												<![CDATA[
+													Map parametros = new HashMap();
+													parametros.put("visible","T");
+													Window window = (Window)Executions.createComponents("/WEB-INF/ventanas/catTiposDocumento.zul", null,parametros);
+													window.doModal();
+													if (window.getAttribute("accion").equals("A"))
+													{
+														org.modelo.dto.TipoDocumento tdoc = window.getAttribute("objeto");
+														rutaAprobacionSeguridad.getPk().setTipoDocumento(tdoc);
+														lblTipoDocumento.setValue(tdoc.getNombre());
+													}
+												]]>
+											</attribute>
+										</button>
+									</hbox>									
+								</row>
+								<row>
+									<label class="obligatorio" value="Area" />
+									<hbox align="center">
+										<label id="lblArea" style="font-weight: bold;"  value="@{rutaAprobacionSeguridad.pk.area.nombre}"/>
+										<button label="${labels.buscar}" image="/images/find.png">
+											<attribute name="onClick">
+												<![CDATA[
+													Map parametros = new HashMap();
+													parametros.put("modo","A");
+													Window window = (Window)Executions.createComponents("/WEB-INF/ventanas/catAreas.zul", null,parametros);
+													window.doModal();
+													if (window.getAttribute("accion").equals("A"))
+													{
+														org.modelo.dto.Area ar = window.getAttribute("objeto");
+														rutaAprobacionSeguridad.getPk().setArea(ar);
+														lblArea.setValue(ar.getNombre());
+														lblSubArea.setValue("");
+														
+														if (ar.getSubAreas().size() > 0)
+														{
+															rutaAprobacionSeguridad.getPk().setSubArea(null);
+															rowSubArea.setVisible(true);
+														}
+														else
+														{
+															rutaAprobacionSeguridad.getPk().setSubArea(ar);
+															rowSubArea.setVisible(false);
+														}
+													}
+												]]>
+											</attribute>
+										</button>
+									</hbox>									
+								</row>
+								<row id="rowSubArea" visible="false">
+									<label class="obligatorio" value="Sub Area" />
+									<hbox>
+										<label id="lblSubArea" style="font-weight: bold;" value="@{rutaAprobacionSeguridad.pk.subArea.nombre}"/>
+										<button label="${labels.buscar}" image="/images/find.png" >
+											<attribute name="onClick">
+												<![CDATA[
+													Map parametros = new HashMap();
+													parametros.put("modo","S");
+													Window window = (Window)Executions.createComponents("/WEB-INF/ventanas/catAreas.zul", null,parametros);
+													window.doModal();
+													if (window.getAttribute("accion").equals("A"))
+													{
+														org.modelo.dto.Area sar = window.getAttribute("objeto");
+														rutaAprobacionSeguridad.getPk().setSubArea(sar);
+														lblSubArea.setValue(sar.getNombre());
+													}
+												]]>
+											</attribute>
+										</button>
+									</hbox>									
+								</row>
+								<row spans="2">
+									<label class="obligatorio" value="${labels.datosObligatorios}" />
+								</row>
+							</rows>
+						</grid>
+                  </tabpanel>
+                  <tabpanel style="overflow:auto">
+                  	<toolbar mold="default" style="background:#635fa8;">
+											<hbox align="center" style="background:#FFFFFF;">
+												<button label="${labels.agregar} ${labels.aprobadores}" image="/images/incluir.png"  id="Incluir" >
+													<attribute name="onClick">
+														<![CDATA[
+															Map parametros = new HashMap();
+															parametros.put("modo","M");
+															parametros.put("seleccion","varios");
+															Window window = (Window)Executions.createComponents("/WEB-INF/ventanas/catUsuarios.zul", null,parametros);
+															window.doModal();
+															if (window.getAttribute("accion").equals("A"))
+															{
+																Set items = window.getAttribute("objeto");
+																for(Listitem li : items)
+																{
+																	boolean encontro = false;
+																	for(org.modelo.dto.RutaAprobacionAprobador raa : rutaAprobacionSeguridad.getAprobadores())
+																	{
+																		if (raa.getAprobadorid().equals(((org.modelo.dto.Usuario) li.getValue()).getLogin()))
+																		{
+																			encontro = true;
+																			break;
+																		}
+																	}
+																	
+																	if (!encontro)
+																	{
+																		//org.modelo.dto.RutaAprobacionAprobadorPK raapk = new org.modelo.dto.RutaAprobacionAprobadorPK();
+																		//raapk.setAprobadorid( ((org.modelo.dto.Usuario) li.getValue()).getLogin());
+																		org.modelo.dto.RutaAprobacionAprobador raa = new org.modelo.dto.RutaAprobacionAprobador();
+																		raa.setAprobador(li.getValue());
+																		raa.setAprobadorid(((org.modelo.dto.Usuario) li.getValue()).getLogin());
+																		raa.setDiasAprobacion(ibxDias.getValue());
+																		raa.setOrden(rutaAprobacionSeguridad.getAprobadores().size() + 1);
+																		raa.setRutaAprobacion(rutaAprobacionSeguridad);
+																		
+																		rutaAprobacionSeguridad.getAprobadores().add(raa);
+																	}
+																}
+																aprobadores = new ArrayList(rutaAprobacionSeguridad.aprobadores);
+																binder.loadAll();
+															}
+															
+														]]>
+													</attribute>
+												</button>
+												<button label="${labels.remover} ${labels.todos} ${labels.aprobadores} ${labels.seleccionados}" image="/images/borrar.png" id="EliminarTodo" >
+													<attribute name="onClick">
+														<![CDATA[	
+														]]>
+													</attribute>
+												</button>
+												<separator></separator>
+												<label value="${labels.diasParaAprobar}"></label>
+												<intbox id="ibxDias" cols="3" value="5"></intbox>
+											</hbox>
+										</toolbar>
+										<listbox fixedLayout="true" multiple="true" mold="paging" pageSize="20" width="100%" model="@{aprobadores}" checkmark="true">
+				    						<listhead>
+				    							<listheader width="3%" />
+				    							<listheader label="${labels.nombres}" align="center" valign="middle" width="25%" />
+												<listheader label="${labels.apellidos}" align="center" valign="middle" width="25%" />
+												<listheader label="${labels.cargo}" align="center" valign="middle" width="20%" />
+												<listheader label="${labels.diasParaAprobar}" align="center" valign="middle" width="17%" />
+												<listheader label="Ops." align="center" valign="middle" width="10%" />
+				    						</listhead>
+				    						<listitem sclass="row-border item" self="@{each=objetoli}" value="@{objetoli}">
+				    							<attribute name="onCreate">
+													<![CDATA[
+														self.setSelected(false);
+													]]>
+												</attribute>
+				    							<listcell/>
+												<listcell label="@{objetoli.aprobador.nombres}"/>
+				  								<listcell label="@{objetoli.aprobador.apellidos}"/>
+				  								<listcell label=""/>
+				  								<listcell>
+				  									<intbox cols="3" value="@{objetoli.diasAprobacion}"></intbox>
+				  								</listcell>
+				  								<listcell>
+				  									<attribute name="onClick">
+														<![CDATA[
+															((Listitem)self.getParent()).setSelected(false);
+														]]>
+													</attribute>
+													<image tooltiptext="${labels.remover} ${labels.usuario}" src="/images/borrar.png" id="Eliminar" width="18px" height="18px">
+														<attribute name="onClick">
+															<![CDATA[
+																org.modelo.dto.Usuario usu = ((Listitem)self.getParent().getParent()).getValue();
+																rutaAprobacionSeguridad.getUsuarios().remove(usu);
+																binder.loadAll();
+															]]>
+														</attribute>
+													</image>
+													<image tooltiptext="Bajar" src="/images/downarrow_g.png"  width="18px" height="18px">
+														<attribute name="onClick">
+															<![CDATA[
+																org.modelo.dto.RutaAprobacionAprobador raa = ((Listitem)self.getParent().getParent()).getValue();
+																if (raa.getOrden() < raa.getRutaAprobacion().getAprobadores().size())
+																{
+																	List apps = new ArrayList(raa.getRutaAprobacion().getAprobadores());
+																	boolean encontro = false;
+																	for(int i = 0; i < apps.size(); i++)
+																	{
+																		org.modelo.dto.RutaAprobacionAprobador ra = apps.get(i);
+																		if (raa.equals(ra))
+																		{
+																			org.modelo.dto.RutaAprobacionAprobador raaDes = apps.get(i+1);
+																			raaDes.setOrden(raaDes.getOrden() - 1);
+																			ra.setOrden(ra.getOrden() + 1);
+																			raa.getRutaAprobacion().ordenarAprobadores();
+																			binder.loadAll();
+																			break;
+																		}
+																	}
+																}
+															]]>
+														</attribute>
+													</image>
+													<image tooltiptext="Subir" src="/images/uparrow_g.png"  width="18px" height="18px">
+														<attribute name="onClick">
+															<![CDATA[
+																org.modelo.dto.RutaAprobacionAprobador raa = ((Listitem)self.getParent().getParent()).getValue();
+																if (raa.getOrden() > 1)
+																{
+																	List listaApps = new ArrayList(raa.getRutaAprobacion().getAprobadores());
+																	boolean encontro = false;
+																	for(int i = 0; i < listaApps.size(); i++)
+																	{
+																		org.modelo.dto.RutaAprobacionAprobador ru = listaApps.get(i);
+																		if (raa.equals(ru))
+																		{
+																			org.modelo.dto.RutaAprobacionAprobador raaAnt = listaApps.get(i-1);
+																			raaAnt.setOrden(raaAnt.getOrden() + 1);
+																			ru.setOrden(ru.getOrden() - 1);
+																			raa.getRutaAprobacion().ordenarAprobadores();
+																			binder.loadAll();
+																			break;
+																		}
+																	}
+																}
+															]]>
+														</attribute>
+													</image>
+				  								</listcell>
+				    						</listitem>
+										</listbox>
+					</tabpanel>
+					<tabpanel style="overflow:auto">
+                  	<toolbar mold="default" style="background:#635fa8;">
+											<hbox align="center" style="background:#FFFFFF;">
+												<button label="${labels.agregar} ${labels.aprobadores}" image="/images/incluir.png"  id="IncluirSol" >
+													<attribute name="onClick">
+														<![CDATA[
+															Map parametros = new HashMap();
+															parametros.put("modo","M");
+															parametros.put("seleccion","varios");
+															Window window = (Window)Executions.createComponents("/WEB-INF/ventanas/catUsuarios.zul", null,parametros);
+															window.doModal();
+															if (window.getAttribute("accion").equals("A"))
+															{
+																Set items = window.getAttribute("objeto");
+																for(Listitem li : items)
+																{
+																	boolean encontro = false;
+																	for(org.modelo.dto.RutaAprobacionAprobadorSolicitud raas : rutaAprobacionSeguridad.getAprobadoresSolicitud())
+																	{
+																		if (raa.getAprobadorid().equals(((org.modelo.dto.Usuario) li.getValue()).getLogin()))
+																		{
+																			encontro = true;
+																			break;
+																		}
+																	}
+																	
+																	if (!encontro)
+																	{
+																		//org.modelo.dto.RutaAprobacionAprobadorPK raapk = new org.modelo.dto.RutaAprobacionAprobadorPK();
+																		//raapk.setAprobadorid( ((org.modelo.dto.Usuario) li.getValue()).getLogin());
+																		org.modelo.dto.RutaAprobacionAprobadorSolicitud raas = new org.modelo.dto.RutaAprobacionAprobadorSolicitud();
+																		raas.setAprobador(li.getValue());
+																		raas.setAprobadorid(((org.modelo.dto.Usuario) li.getValue()).getLogin());
+																		raas.setDiasAprobacion(ibxDias.getValue());
+																		raas.setOrden(rutaAprobacionSeguridad.getAprobadores().size() + 1);
+																		raas.setRutaAprobacion(rutaAprobacionSeguridad);
+																		
+																		rutaAprobacionSeguridad.getAprobadoresSolicitud().add(raas);
+																	}
+																}
+																aprobadoresSolicitud = new ArrayList(rutaAprobacionSeguridad.getAprobadoresSolicitud());
+																binder.loadAll();
+															}
+															
+														]]>
+													</attribute>
+												</button>
+												<button label="${labels.remover} ${labels.todos} ${labels.aprobadores} ${labels.seleccionados}" image="/images/borrar.png" id="EliminarTodo" >
+													<attribute name="onClick">
+														<![CDATA[	
+														]]>
+													</attribute>
+												</button>
+												<separator></separator>
+												<label value="${labels.diasParaAprobar}"></label>
+												<intbox id="ibxDias" cols="3" value="5"></intbox>
+											</hbox>
+										</toolbar>
+										<listbox fixedLayout="true" multiple="true" mold="paging" pageSize="20" width="100%" model="@{aprobadores}" checkmark="true">
+				    						<listhead>
+				    							<listheader width="3%" />
+				    							<listheader label="${labels.nombres}" align="center" valign="middle" width="25%" />
+												<listheader label="${labels.apellidos}" align="center" valign="middle" width="25%" />
+												<listheader label="${labels.cargo}" align="center" valign="middle" width="20%" />
+												<listheader label="${labels.diasParaAprobar}" align="center" valign="middle" width="17%" />
+												<listheader label="Ops." align="center" valign="middle" width="10%" />
+				    						</listhead>
+				    						<listitem sclass="row-border item" self="@{each=objetoli}" value="@{objetoli}">
+				    							<attribute name="onCreate">
+													<![CDATA[
+														self.setSelected(false);
+													]]>
+												</attribute>
+				    							<listcell/>
+												<listcell label="@{objetoli.aprobador.nombres}"/>
+				  								<listcell label="@{objetoli.aprobador.apellidos}"/>
+				  								<listcell label=""/>
+				  								<listcell>
+				  									<intbox cols="3" value="@{objetoli.diasAprobacion}"></intbox>
+				  								</listcell>
+				  								<listcell>
+				  									<attribute name="onClick">
+														<![CDATA[
+															((Listitem)self.getParent()).setSelected(false);
+														]]>
+													</attribute>
+													<image tooltiptext="${labels.remover} ${labels.usuario}" src="/images/borrar.png" id="Eliminar" width="18px" height="18px">
+														<attribute name="onClick">
+															<![CDATA[
+																org.modelo.dto.Usuario usu = ((Listitem)self.getParent().getParent()).getValue();
+																rutaAprobacionSeguridad.getUsuarios().remove(usu);
+																binder.loadAll();
+															]]>
+														</attribute>
+													</image>
+													<image tooltiptext="Bajar" src="/images/downarrow_g.png"  width="18px" height="18px">
+														<attribute name="onClick">
+															<![CDATA[
+																org.modelo.dto.RutaAprobacionAprobador raa = ((Listitem)self.getParent().getParent()).getValue();
+																if (raa.getOrden() < raa.getRutaAprobacion().getAprobadores().size())
+																{
+																	List apps = new ArrayList(raa.getRutaAprobacion().getAprobadores());
+																	boolean encontro = false;
+																	for(int i = 0; i < apps.size(); i++)
+																	{
+																		org.modelo.dto.RutaAprobacionAprobador ra = apps.get(i);
+																		if (raa.equals(ra))
+																		{
+																			org.modelo.dto.RutaAprobacionAprobador raaDes = apps.get(i+1);
+																			raaDes.setOrden(raaDes.getOrden() - 1);
+																			ra.setOrden(ra.getOrden() + 1);
+																			raa.getRutaAprobacion().ordenarAprobadores();
+																			binder.loadAll();
+																			break;
+																		}
+																	}
+																}
+															]]>
+														</attribute>
+													</image>
+													<image tooltiptext="Subir" src="/images/uparrow_g.png"  width="18px" height="18px">
+														<attribute name="onClick">
+															<![CDATA[
+																org.modelo.dto.RutaAprobacionAprobador raa = ((Listitem)self.getParent().getParent()).getValue();
+																if (raa.getOrden() > 1)
+																{
+																	List listaApps = new ArrayList(raa.getRutaAprobacion().getAprobadores());
+																	boolean encontro = false;
+																	for(int i = 0; i < listaApps.size(); i++)
+																	{
+																		org.modelo.dto.RutaAprobacionAprobador ru = listaApps.get(i);
+																		if (raa.equals(ru))
+																		{
+																			org.modelo.dto.RutaAprobacionAprobador raaAnt = listaApps.get(i-1);
+																			raaAnt.setOrden(raaAnt.getOrden() + 1);
+																			ru.setOrden(ru.getOrden() - 1);
+																			raa.getRutaAprobacion().ordenarAprobadores();
+																			binder.loadAll();
+																			break;
+																		}
+																	}
+																}
+															]]>
+														</attribute>
+													</image>
+				  								</listcell>
+				    						</listitem>
+										</listbox>
+					</tabpanel>
+					<tabpanel style="overflow:auto">
+						<grid>
+							<columns>
+								<column width="15%" align="center" />
+								<column width="85%" align="center" />
+							</columns>
+							<rows>
+								<row spans="2" align="center">
+									<label style="font-weight:bold; font-size:14px" value="Usuarios Con Permisos Para Hacer Solicitudes"></label>
+								</row>
+								<row spans="2" align="center">
+									<button image="/images/People-Patient-Male-icon.png" label="${labels.agregar} ${labels.usuarios}">
+										<attribute name="onClick">
+											<![CDATA[
+												Map parametros = new HashMap();
+												parametros.put("modo","M");
+												parametros.put("seleccion","varios");
+												Window window = (Window)Executions.createComponents("/WEB-INF/ventanas/catUsuarios.zul", null,parametros);
+												window.doModal();
+												if (window.getAttribute("accion").equals("A"))
+												{
+													Set items = window.getAttribute("objeto");
+													for(Listitem li : items)
+													{
+														boolean encontro = false;
+														for(org.modelo.dto.Usuario usu : rutaAprobacionSeguridad.getUsuariosPermiso())
+														{
+															if (usu.equals(li.getValue()))
+															{
+																encontro = true;
+																break;
+															}
+														}
+														
+														if (!encontro)
+														{
+															rutaAprobacionSeguridad.getUsuariosPermiso().add(li.getValue());
+															usuariosPermiso = new ArrayList(rutaAprobacionSeguridad.getUsuariosPermiso());
+															binder.loadAll();
+														}
+													}
+												}
+											]]>
+										</attribute>
+									</button>
+								</row>
+								<row spans="2" align="center">
+									<div align="center">
+										<listbox fixedLayout="true" multiple="true" mold="paging" pageSize="20" width="80%" model="@{usuariosPermiso}" checkmark="true">
+				    						<listhead>
+				    							<listheader width="3%" />
+				    							<listheader label="${labels.nombres}" align="center" valign="middle" width="30%" />
+												<listheader label="${labels.apellidos}" align="center" valign="middle" width="30%" />
+												<listheader label="${labels.cargo}" align="center" valign="middle" width="30%" />
+												<listheader label="Ops." align="center" valign="middle" width="7%" />
+				    						</listhead>
+				    						<listitem sclass="row-border item" self="@{each=objetousu}" value="@{objetousu}">
+				    							<attribute name="onCreate">
+													<![CDATA[
+														self.setSelected(false);
+													]]>
+												</attribute>
+				    							<listcell/>
+												<listcell label="@{objetousu.nombres}"/>
+				  								<listcell label="@{objetousu.apellidos}"/>
+				  								<listcell label=""/>
+				  								<listcell>
+				  									<attribute name="onClick">
+														<![CDATA[
+															((Listitem)self.getParent()).setSelected(false);
+														]]>
+													</attribute>
+													<image tooltiptext="${labels.remover} ${labels.usuario}" src="/images/borrar.png" id="EliminarUP" width="18px" height="18px">
+														<attribute name="onClick">
+															<![CDATA[
+																org.modelo.dto.Usuario usu = ((Listitem)self.getParent().getParent()).getValue();
+																rutaAprobacionSeguridad.getUsuariosPermiso().remove(usu);
+																binder.loadAll();
+															]]>
+														</attribute>
+													</image>
+				  								</listcell>
+				    						</listitem>
+										</listbox>
+									</div>
+								</row>
+								<row spans="2" align="center">
+									<label style="font-weight:bold; font-size:14px" value="."></label>
+								</row>
+								<row spans="2" align="center">
+									<label style="font-weight:bold; font-size:14px" value="Grupos Con Permisos Para Hacer Solicitudes"></label>
+								</row>
+								<row spans="2" align="center">
+									<button image="/images/agregarGrupos.png" label="${labels.agregar} ${labels.grupos}">
+										<attribute name="onClick">
+											<![CDATA[
+												Map parametros = new HashMap();
+												parametros.put("modo","M");
+												Window window = (Window)Executions.createComponents("/WEB-INF/ventanas/catGrupos.zul", null,parametros);
+												window.doModal();
+												if (window.getAttribute("accion").equals("A"))
+												{
+													Set items = window.getAttribute("objeto");
+													for(Listitem li : items)
+													{
+														boolean encontro = false;
+														for(org.modelo.dto.Grupo gru : rutaAprobacionSeguridad.getGruposPermiso())
+														{
+															if (gru.equals(li.getValue()))
+															{
+																encontro = true;
+																break;
+															}
+														}
+														
+														if (!encontro)
+														{
+															rutaAprobacionSeguridad.getGruposPermiso().add(li.getValue());
+															gruposPermiso = new ArrayList(rutaAprobacionSeguridad.getGruposPermiso());
+															binder.loadAll();
+														}
+													}
+												}
+											]]>
+										</attribute>
+									</button>
+								</row>
+								<row spans="2" align="center">
+									<div align="center">
+										<listbox fixedLayout="true" multiple="true" mold="paging" pageSize="20" width="80%" model="@{gruposPermiso}" checkmark="true">
+				    						<listhead>
+				    							<listheader width="5%" />
+				    							<listheader label="${labels.nombre}" align="center" valign="middle" width="85%" />
+												<listheader label="Ops." align="center" valign="middle" width="10%" />
+				    						</listhead>
+				    						<listitem sclass="row-border item" self="@{each=objetogr}" value="@{objetogr}">
+				    							<attribute name="onCreate">
+													<![CDATA[
+														self.setSelected(false);
+													]]>
+												</attribute>
+				    							<listcell/>
+												<listcell label="@{objetogr.nombre}"/>
+				  								<listcell>
+				  									<attribute name="onClick">
+														<![CDATA[
+															((Listitem)self.getParent()).setSelected(false);
+														]]>
+													</attribute>
+													<image tooltiptext="${labels.remover} ${labels.grupo}" src="/images/borrar.png" id="EliminarGP" width="18px" height="18px">
+														<attribute name="onClick">
+															<![CDATA[
+																org.modelo.dto.Grupo gru = ((Listitem)self.getParent().getParent()).getValue();
+																rutaAprobacionSeguridad.getGruposPermiso().remove(gru);
+																binder.loadAll();
+															]]>
+														</attribute>
+													</image>
+				  								</listcell>
+				    						</listitem>
+										</listbox>
+									</div>
+								</row>
+								<row spans="2" align="center">
+									<label style="font-weight:bold; font-size:14px" value="."></label>
+								</row>
+								<row spans="2" align="center">
+									<label style="font-weight:bold; font-size:14px" value="."></label>
+								</row>
+								<row spans="2" align="center">
+									<label style="font-weight:bold; font-size:14px" value="Usuarios Con Permisos Para Ver los Documentos"></label>
+								</row>
+								<row spans="2" align="center">
+									<button image="/images/People-Patient-Male-icon.png" label="${labels.agregar} ${labels.usuarios}">
+										<attribute name="onClick">
+											<![CDATA[
+												Map parametros = new HashMap();
+												parametros.put("modo","M");
+												parametros.put("seleccion","varios");
+												Window window = (Window)Executions.createComponents("/WEB-INF/ventanas/catUsuarios.zul", null,parametros);
+												window.doModal();
+												if (window.getAttribute("accion").equals("A"))
+												{
+													Set items = window.getAttribute("objeto");
+													for(Listitem li : items)
+													{
+														boolean encontro = false;
+														for(org.modelo.dto.Usuario usu : rutaAprobacionSeguridad.getUsuariosSeguridad())
+														{
+															if (usu.equals(li.getValue()))
+															{
+																encontro = true;
+																break;
+															}
+														}
+														
+														if (!encontro)
+														{
+															rutaAprobacionSeguridad.getUsuariosSeguridad().add(li.getValue());
+															usuariosSeguridad = new ArrayList(rutaAprobacionSeguridad.getUsuariosSeguridad());
+															binder.loadAll();
+														}
+													}
+												}
+											]]>
+										</attribute>
+									</button>
+								</row>
+								<row spans="2" align="center">
+									<div align="center">
+										<listbox fixedLayout="true" multiple="true" mold="paging" pageSize="20" width="80%" model="@{usuariosSeguridad}" checkmark="true">
+				    						<listhead>
+				    							<listheader width="3%" />
+				    							<listheader label="${labels.nombres}" align="center" valign="middle" width="35%" />
+												<listheader label="${labels.apellidos}" align="center" valign="middle" width="35%" />
+												<listheader label="${labels.cargo}" align="center" valign="middle" width="20%" />
+												<listheader label="Ops." align="center" valign="middle" width="7%" />
+				    						</listhead>
+				    						<listitem sclass="row-border item" self="@{each=objetousu}" value="@{objetousu}">
+				    							<attribute name="onCreate">
+													<![CDATA[
+														self.setSelected(false);
+													]]>
+												</attribute>
+				    							<listcell/>
+												<listcell label="@{objetousu.nombres}"/>
+				  								<listcell label="@{objetousu.apellidos}"/>
+				  								<listcell label=""/>
+				  								<listcell>
+				  									<attribute name="onClick">
+														<![CDATA[
+															((Listitem)self.getParent()).setSelected(false);
+														]]>
+													</attribute>
+													<image tooltiptext="${labels.remover} ${labels.usuario}" src="/images/borrar.png" id="EliminarP" width="18px" height="18px">
+														<attribute name="onClick">
+															<![CDATA[
+																org.modelo.dto.Usuario usu = ((Listitem)self.getParent().getParent()).getValue();
+																rutaAprobacionSeguridad.getUsuariosSeguridad().remove(usu);
+																binder.loadAll();
+															]]>
+														</attribute>
+													</image>
+				  								</listcell>
+				    						</listitem>
+										</listbox>
+									</div>
+								</row>
+								<row spans="2" align="center">
+									<label style="font-weight:bold; font-size:14px" value="."></label>
+								</row>
+								<row spans="2" align="center">
+									<label style="font-weight:bold; font-size:14px" value="Grupos Con Permisos Para Ver los Documentos"></label>
+								</row>
+								<row spans="2" align="center">
+									<button image="/images/agregarGrupos.png" label="${labels.agregar} ${labels.grupos}">
+										<attribute name="onClick">
+											<![CDATA[
+												Map parametros = new HashMap();
+												parametros.put("modo","M");
+												Window window = (Window)Executions.createComponents("/WEB-INF/ventanas/catGrupos.zul", null,parametros);
+												window.doModal();
+												if (window.getAttribute("accion").equals("A"))
+												{
+													Set items = window.getAttribute("objeto");
+													for(Listitem li : items)
+													{
+														boolean encontro = false;
+														for(org.modelo.dto.Grupo gru : rutaAprobacionSeguridad.getGruposSeguridad())
+														{
+															if (gru.equals(li.getValue()))
+															{
+																encontro = true;
+																break;
+															}
+														}
+														
+														if (!encontro)
+														{
+															rutaAprobacionSeguridad.getGruposSeguridad().add(li.getValue());
+															gruposSeguridad = new ArrayList(rutaAprobacionSeguridad.getGruposSeguridad());
+															binder.loadAll();
+														}
+													}
+												}
+											]]>
+										</attribute>
+									</button>
+								</row>
+								<row spans="2" align="center">
+									<div align="center">
+										<listbox fixedLayout="true" multiple="true" mold="paging" pageSize="20" width="80%" model="@{gruposSeguridad}" checkmark="true">
+				    						<listhead>
+				    							<listheader width="5%" />
+				    							<listheader label="${labels.nombre}" align="center" valign="middle" width="85%" />
+												<listheader label="Ops." align="center" valign="middle" width="10%" />
+				    						</listhead>
+				    						<listitem sclass="row-border item" self="@{each=objetogr}" value="@{objetogr}">
+				    							<attribute name="onCreate">
+													<![CDATA[
+														self.setSelected(false);
+													]]>
+												</attribute>
+				    							<listcell/>
+												<listcell label="@{objetogr.nombre}"/>
+				  								<listcell>
+				  									<attribute name="onClick">
+														<![CDATA[
+															((Listitem)self.getParent()).setSelected(false);
+														]]>
+													</attribute>
+													<image tooltiptext="${labels.remover} ${labels.grupo}" src="/images/borrar.png" id="EliminarS" width="18px" height="18px">
+														<attribute name="onClick">
+															<![CDATA[
+																org.modelo.dto.Grupo gru = ((Listitem)self.getParent().getParent()).getValue();
+																rutaAprobacionSeguridad.getGruposSeguridad().remove(gru);
+																binder.loadAll();
+															]]>
+														</attribute>
+													</image>
+				  								</listcell>
+				    						</listitem>
+										</listbox>
+									</div>
+								</row>
+							</rows>
+						</grid>
+					</tabpanel>
+				</tabpanels>
+			</tabbox>
+		</div>
+		<div align="right" height="12%" style="background:#635fa8">
+			<button id="btnAceptar" label="${labels.aceptar}" image="/images/aceptar.png" orient="vertical">
+				<attribute name="onClick">
+					<![CDATA[
+						try
+						{
+							servicioAdministrarConfiguracion.verificarRutaAprobacion(rutaAprobacionSeguridad);
+							servicioAdministrarConfiguracion.guardarRutaAprobacion(rutaAprobacionSeguridad);
+							alert("Datos Guardados con Exito");
+							editRutaAprobacionSeguridad.setAttribute("accion","A");
+							editRutaAprobacionSeguridad.detach();
+						}
+						catch (org.sevenlabs.exception.SevenLabsException sle)
+						{
+							alert(sle.getMessage());
+						}
+					]]>
+				</attribute>
+			</button>
+			<button id="btnCancelar" label="${labels.cancelar}" image="/images/remover.png" orient="vertical">
+				<attribute name="onClick">
+					<![CDATA[
+						editRutaAprobacionSeguridad.setAttribute("accion","C");
+						editRutaAprobacionSeguridad.detach();
+					]]>
+				</attribute>
+			</button>
+		</div>
+	</window>
+</zk>

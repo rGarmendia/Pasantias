@@ -1,0 +1,317 @@
+a:hover { text-decoration: none; }
+body {
+	font-family: 'Montserrat', sans-serif;
+	font-size: 15px;
+}
+button {
+	border: 0;
+}
+header .pull-left {
+	width: 100%;
+}
+header figure {
+	margin: .8em 0;
+}
+ img {
+	margin: 0 auto;
+}
+h1 { font-size: 1.8em; }
+h3 { font-size: 1.3em; }
+h2 span {
+	
+	background: #c12e3a;
+	border-radius: 50%;
+	color: rgb(240,240,240);
+	display: inline-block;
+	font-size: .5em;
+	padding: .5em .8em;
+	text-align: center;
+	vertical-align: middle;
+}
+footer {
+	font-size: 90%;
+	padding: 4em 0 2em 0;
+	border-bottom: 1em solid #202932;
+	
+}
+footer li:first-child {
+	font-size: 2.5em;
+}
+
+#info-medica h1 {
+	margin: 0;
+	padding: 1em 0;
+}
+#beneficios {
+	margin: 1.5em 0;
+}
+.contactar {
+	margin-top: 3em;
+}
+.contenido article>img {
+	border-bottom: 10px solid #c12e3a;
+}
+.contenido h1 {
+	color: #c12e3a;
+	font-size: 2em;
+	margin-bottom: 1em;
+}
+.contenido h2 {
+	margin: 1.5em 0 .5em 0;
+}
+.contenido li {
+	font-size: 80%;
+	margin-bottom: .5em;
+}
+.contenido li span {
+	margin-right: 1em;
+	padding: 1em;
+	border-radius: 50%;
+	background: #c12e3a;
+	color: #fff;
+}
+.contenido .container {
+	background: #fff;
+	padding: 2em 2em 0 2em;
+	position: relative;
+}
+.bg-success {
+	padding: .8em 1.2em;
+	text-align: center;
+}
+.glyph-icon {
+    padding: 10px;
+    display: block;
+    font-family: "Flaticon";
+    font-size: 64px;
+    line-height: 1;
+}
+#tranquilidad {
+	position: relative;
+}
+#tranquilidad div {
+	padding: 0;
+	margin: 0;
+}
+#tranquilidad h3 {
+	margin: 0 auto;
+	padding: .9em 0em;
+}
+#tranquilidad .btn-registrese {
+	bottom: -30px;
+	left: 0;
+	margin: 0 auto;
+	position: absolute;
+	right: 0;
+	width: 80%;
+	z-index: 21;
+}
+#tranquilidad .btn-registrese:hover {
+	background: #c12e3a;
+}
+.btn-registrese {
+	font-size: 1.1em;
+	padding: .4em .7em;
+	text-decoration: none;
+}
+.btn-registrese:hover {
+	background: #202932;
+	color: #efefef;
+}
+
+.fondo-primario {
+	background: #202932;
+	color: #efefef; 
+}
+.fondo-secundario {
+	background: #7fa937;
+	color: #efefef; 
+}
+.carousel-caption {
+	color: #c12e3a;
+	text-shadow: none;
+	text-transform: uppercase;
+}
+.carousel-caption h2 {
+	font-size: 1.5em;
+	font-weight: bold;
+}
+.carousel-inner figure {
+	position: relative;
+	height: 300px;
+}
+.carousel-inner img {
+	position: absolute;
+	right: 0;
+}
+.carousel-control.left,
+.carousel-control.right { background: none; }
+.color-primario { color: #c12e3a; }
+.nav-pills div {
+	color: #c12e3a;
+	font-size: 1.4em;
+}
+.nav-pills > li {
+	width: 49%;
+	font-size: 94%;
+	margin: .3em 0;
+}
+.nav-pills>li>a {
+	color: #202932;
+	padding: .3em .1em;
+	background: rgba(255,255,255,.3);
+}
+.nav-pills>li>a:hover, .nav-pills>li>a.activo {
+	text-shadow: 0 0 3px white;
+	background: #c12e3a;
+	color: #efefef;
+}
+.slogan {
+	background: url(../img/template/linea-verde) center center repeat-x;
+	font-size: 1.5em;
+}
+.como-funciona {
+	text-align: center;
+}
+[class^="flaticon-"]::before,
+[class*=" flaticon-"]::before,
+[class^="flaticon-"]::after,
+[class*=" flaticon-"]::after {
+	margin-left: 0;
+	}
+@media (min-width: 480px){
+	.contenido li {
+		font-size: 100%;
+	}
+	nav {
+		margin: .5em auto;
+		width: 86%;
+	}
+	header .pull-right {
+		float: none !important;
+	}
+	.nav-pills>li>a {
+		padding: .3em .5em;
+	}
+	.nav-pills > li {
+		width: auto;
+		margin: 0 auto;
+		font-size: 100%;
+	}
+	#beneficios .row>div {
+		padding: 2em 0;
+		font-size: .8em;
+		width: 33%;
+		float: left;
+	}
+	footer {
+		font-size: 100%;
+	}
+}
+@media (min-width: 600px){
+	nav {
+		width: 70%;
+	}
+	.carousel-control {
+		width: 10%;
+	}
+	.contenido .container {
+		
+		top: -50px;
+	}
+	.como-funciona .col-md-6 {
+		width: 50%;
+		float: left;
+	}
+}
+@media (min-width: 768px){
+	.como-funciona {
+		text-align: left;
+	}
+	header .pull-left {
+		width: auto;
+	}
+	header .pull-right {
+		float: right !important;
+	}
+	nav {
+		margin-top: 3em;
+		width: auto;
+	}
+	#tranquilidad .btn-registrese {
+		width: 60%;
+	}
+	.header {
+		position: absolute;
+		top: 1em;
+		width: 100%;
+		z-index: 22;
+	}
+	.carousel-inner figure {
+		height: 700px;
+	}
+	.carousel-inner img {
+		right: -50%;
+	}
+	.carousel-caption {
+		margin-bottom: 150px;
+		font-size: 1.8em;
+	}
+}
+@media (min-width: 900px){
+	.contenido .container {
+		
+		top: -100px;
+	}
+	.carousel-inner figure {
+		height: 550px;
+	}
+	#beneficios .row>div {
+		border-right: 1px solid #d2d2d2;
+		padding: 2em 1em;
+	}
+	#beneficios .row>div:last-child {
+		border-right: none;
+	}
+	.carousel-caption {
+		color: #c12e3a;
+		left: 10%;
+		text-align: left;
+		text-shadow: none;
+		text-transform: uppercase;
+		top: 200px;
+		width: 35%;
+	}
+	.carousel-inner img {
+		right: 0;
+		left: 0;
+		margin: 0 auto;
+		width: 100%;
+	}
+	footer {
+		font-size: 100%;
+		padding-top: 10em;
+	}
+	#beneficios {
+		margin: 4em 0;
+	}
+	#tranquilidad h3 {
+		width: 70%;
+		padding-bottom: 1.5em;
+	}
+	#tranquilidad .btn-registrese {
+		width: 30%;
+	}
+	.slogan {
+	bottom: -50px;
+	position: absolute;
+	width: 100%;
+	z-index: 20;
+
+	}
+	
+	.form-control
+	{
+		font-family: 'Montserrat', sans-serif;
+	}
+}

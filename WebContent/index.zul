@@ -1,0 +1,471 @@
+<?page title="" contentType="text/html;charset=UTF-8" id="indexAdm"?>
+<?init class="org.zkoss.zk.ui.util.Composition" arg0="/WEB-INF/templates/templateAdm.zul"?>
+<?init class="org.zkoss.zkplus.databind.AnnotateDataBinderInit"?>
+<?variable-resolver class="org.zkoss.zkplus.spring.DelegatingVariableResolver"?>
+
+<zk xmlns:n="http://www.zkoss.org/2005/zk/native">
+	<zscript src="/WEB-INF/commons/configureContext.zs" />
+	<zscript>
+		<![CDATA[
+			void irOpcion(String opcion) {
+				targetArea.getChildren().clear();
+				Map parametros = new HashMap();
+				
+				if (self instanceof Menuitem)
+				{
+					desktop.getSession().setAttribute("permiso", servicioAdministrarConfiguracion.buscarPermisosPorVentanaRol(self.parent.parent.id + "/" + self.id, usuario.rolSistema.nombre));
+					//parametros.put("permisos", servicioAdministrarConfiguracion.buscarPermisosPorVentanaRol(self.parent.parent.id + "/" + self.id, usuario.rolSistema.nombre));
+				}
+				parametros.put("modo","N");
+				Component component = Executions.createComponents(opcion,targetArea,parametros);
+				component.setParent(targetArea);	
+			}
+			
+			void irOpcion(String opcion, Map atributos) {
+				targetArea.getChildren().clear();
+				if (self instanceof Menuitem)
+				{
+					desktop.getSession().setAttribute("permiso", servicioAdministrarConfiguracion.buscarPermisosPorVentanaRol(self.parent.parent.id + "/" + self.id, usuario.rolSistema.nombre));
+					//atributos.put("permisos", servicioAdministrarConfiguracion.buscarPermisosPorVentanaRol(self.parent.parent.id + "/" + self.id, usuario.rolSistema.nombre));
+				}
+				Component component = Executions.createComponents(opcion,targetArea,atributos);
+				component.setParent(targetArea);		
+			}
+			
+			List listaMenusVer = new ArrayList();
+			if (usuario != null)
+			{
+				listaMenusVer = servicioAdministrarConfiguracion.buscarPermisoMenusPorRol(usuario.rolSistema.nombre);
+			}
+		]]>
+	</zscript>
+	<style>
+		.vista.z-toolbar,.vista.z-toolbar a,.vista.z-toolbar
+		a:visited,.vista.z-toolbar a:hover 
+		{ background:none;border:none; }
+		
+
+		[class*="z-menu"]:not([class*="z-icon-"]) {
+    font-size: 14px;
+		.z-menubar-hor, .z-menubar-ver { border: 1px solid #D8D8D8; }
+		
+		@media screen and (max-width: 1024px) {
+    .style-for-larger-screen {
+        ...
+    }
+}
+@media screen and (max-width: 750px) {
+    .style-for-smaller-screen {
+        ...
+    }
+}
+		
+	</style>
+    
+    <hbox self="@{define(info)}"
+			if="${usuario != null and usuario ne app.securityConfig.guestUser}" align="end">
+		<image src="/images/administrator.png"></image>
+	    <label 
+			value="${usuario.nombres} ${usuario.apellidos}" style="font-size:12px;font-weight:bold; color: #ffffff">
+		</label>
+	</hbox>
+    <menubar id="menuPrincipal" width="100%" self="@{define(barra)}"
+		if="${usuario != null and usuario ne app.securityConfig.guestUser}">
+		
+		<menu id="Configuracion" label="Configuracion" style="font-size: 25px">
+            <menupopup>
+            	<menuitem id="Roles" label="Roles" image="/images/zk16x16.png" visible="${listaMenusVer.contains(self.parent.parent.id.concat('/').concat(self.id))}">
+		        	<attribute name="onClick">
+						<![CDATA[
+							{
+								irOpcion("/WEB-INF/ventanas/lstRoles.zul");
+							}
+						]]>
+					</attribute>
+		        </menuitem>
+		        <menuitem id="Permisos" label="Permisos" image="/images/zk16x16.png" visible="${listaMenusVer.contains(self.parent.parent.id.concat('/').concat(self.id))}">
+		        	<attribute name="onClick">
+						<![CDATA[
+							{
+								Map parametros = new HashMap();
+		                        parametros.put("modo","N");
+		                        
+		                        Window window = (Window)Executions.createComponents("/WEB-INF/ventanas/editPermiso.zul", null,parametros);
+		                        window.doModal();
+							}
+						]]>
+					</attribute>
+		        </menuitem>
+		        <menuitem id="Grupos" label="Grupos" image="/images/zk16x16.png" visible="${listaMenusVer.contains(self.parent.parent.id.concat('/').concat(self.id))}">
+		        	<attribute name="onClick">
+						<![CDATA[
+							{
+								irOpcion("/WEB-INF/ventanas/lstGrupos.zul");
+							}
+						]]>
+					</attribute>
+		        </menuitem>
+		        <menuitem id="Tipos de Documento" label="Tipos de Documento" image="/images/zk16x16.png" visible="${listaMenusVer.contains(self.parent.parent.id.concat('/').concat(self.id))}">
+		        	<attribute name="onClick">
+						<![CDATA[
+							{
+								irOpcion("/WEB-INF/ventanas/lstTipoDocumentos.zul");
+							}
+						]]>
+					</attribute>
+		        </menuitem>
+			</menupopup>
+		</menu>
+		<menu id="Administracion" label="Administracion">
+            <menupopup>
+            	<menuitem id="Areas" label="Areas" image="/images/zk16x16.png" visible="${listaMenusVer.contains(self.parent.parent.id.concat('/').concat(self.id))}">
+		        	<attribute name="onClick">
+						<![CDATA[
+							{
+								irOpcion("/WEB-INF/ventanas/lstAreas.zul");
+							}
+						]]>
+					</attribute>
+		        </menuitem>
+		        <menuitem id="Usuarios" label="Usuarios" image="/images/zk16x16.png" visible="${listaMenusVer.contains(self.parent.parent.id.concat('/').concat(self.id))}">
+		        	<attribute name="onClick">
+						<![CDATA[
+							{
+								irOpcion("/WEB-INF/ventanas/lstUsuarios.zul");
+							}
+						]]>
+					</attribute>
+		        </menuitem>
+		        <menuitem id="Rutas de Aprobacion y Seguridad" label="Rutas de Aprobacion y Seguridad" image="/images/zk16x16.png" visible="${listaMenusVer.contains(self.parent.parent.id.concat('/').concat(self.id))}">
+		        	<attribute name="onClick">
+						<![CDATA[
+							{
+								irOpcion("/WEB-INF/ventanas/lstRutasAprobacionSeguridad.zul");
+							}
+						]]>
+					</attribute>
+		        </menuitem>
+			</menupopup>
+		</menu>
+		<menu id="Descripciones de Cargo" label="Descripciones de Cargo">
+            <menupopup>
+            	<menuitem id="Descripciones Vigentes" label="Descripciones de Cargo" image="/images/zk16x16.png" visible="${listaMenusVer.contains(self.parent.parent.id.concat('/').concat(self.id))}">
+		        	<attribute name="onClick">
+						<![CDATA[
+							{
+								irOpcion("/WEB-INF/ventanas/lstDescripcionesVigentesPorArea.zul");
+							}
+						]]>
+					</attribute>
+		        </menuitem>
+            	<menuitem id="Documentos Por Estado" label="Descripciones Por Estado y Area" image="/images/zk16x16.png" visible="${listaMenusVer.contains(self.parent.parent.id.concat('/').concat(self.id))}">
+		        	<attribute name="onClick">
+						<![CDATA[
+							{
+								irOpcion("/WEB-INF/ventanas/lstDescripcionesPorEstadoArea.zul");
+							}
+						]]>
+					</attribute>
+		        </menuitem>
+		        <menuitem id="Mis Documentos Por Estado" label="Mis Descripciones Por Estado y Area" image="/images/zk16x16.png" visible="${listaMenusVer.contains(self.parent.parent.id.concat('/').concat(self.id))}">
+		        	<attribute name="onClick">
+						<![CDATA[
+							{
+								irOpcion("/WEB-INF/ventanas/lstMisDescripcionesPorEstadoArea.zul");
+							}
+						]]>
+					</attribute>
+		        </menuitem>
+		        <menuitem id="Documentos Por Proximo Aprobador" label="Descripciones Por Proximo Aprobador" image="/images/zk16x16.png" visible="${listaMenusVer.contains(self.parent.parent.id.concat('/').concat(self.id))}">
+		        	<attribute name="onClick">
+						<![CDATA[
+							{
+								irOpcion("/WEB-INF/ventanas/lstDescripcionesPorProximoAprobador.zul");
+							}
+						]]>
+					</attribute>
+		        </menuitem>
+		        <menuitem id="Mis Documentos Por Aprobar" label="Mis Descripciones Por Aprobar" image="/images/zk16x16.png" visible="${listaMenusVer.contains(self.parent.parent.id.concat('/').concat(self.id))}">
+		        	<attribute name="onClick">
+						<![CDATA[
+							{
+								irOpcion("/WEB-INF/ventanas/lstMisDescripcionesPorAprobar.zul");
+							}
+						]]>
+					</attribute>
+		        </menuitem>
+			</menupopup>
+		</menu>
+		<menu id="Otros Documentos" label="Otros Documentos">
+            <menupopup>
+            	<menuitem id="Documentos Vigentes" label="Documentos Vigentes" image="/images/zk16x16.png" visible="${listaMenusVer.contains(self.parent.parent.id.concat('/').concat(self.id))}">
+		        	<attribute name="onClick">
+						<![CDATA[
+							{
+								irOpcion("/WEB-INF/ventanas/lstDocumentosVigentesPorAreaTipo.zul");
+							}
+						]]>
+					</attribute>
+		        </menuitem>
+            	<menuitem id="Otros Documentos Por Estado" label="Documentos Por Estado y Area" image="/images/zk16x16.png" visible="${listaMenusVer.contains(self.parent.parent.id.concat('/').concat(self.id))}">
+		        	<attribute name="onClick">
+						<![CDATA[
+							{
+								irOpcion("/WEB-INF/ventanas/lstDocumentosPorEstadoArea.zul");
+							}
+						]]>
+					</attribute>
+		        </menuitem>
+		        <menuitem id="Mis Otros Documentos Por Estado" label="Mis Documentos Por Estado y Area" image="/images/zk16x16.png" visible="${listaMenusVer.contains(self.parent.parent.id.concat('/').concat(self.id))}">
+		        	<attribute name="onClick">
+						<![CDATA[
+							{
+								irOpcion("/WEB-INF/ventanas/lstMisDocumentosPorEstadoArea.zul");
+							}
+						]]>
+					</attribute>
+		        </menuitem>
+		        <menuitem id="Otros Documentos Por Proximo Aprobador" label="Documentos Por Proximo Aprobador" image="/images/zk16x16.png" visible="${listaMenusVer.contains(self.parent.parent.id.concat('/').concat(self.id))}">
+		        	<attribute name="onClick">
+						<![CDATA[
+							{
+								irOpcion("/WEB-INF/ventanas/lstDocumentosPorProximoAprobador.zul");
+							}
+						]]>
+					</attribute>
+		        </menuitem>
+		        <menuitem id="Mis Otros Documentos Por Aprobar" label="Mis Documentos Por Aprobar" image="/images/zk16x16.png" visible="${listaMenusVer.contains(self.parent.parent.id.concat('/').concat(self.id))}">
+		        	<attribute name="onClick">
+						<![CDATA[
+							{
+								irOpcion("/WEB-INF/ventanas/lstMisDocumentosPorAprobar.zul");
+							}
+						]]>
+					</attribute>
+		        </menuitem>
+			</menupopup>
+		</menu>
+		<menu id="Glosario de Terminos" label="Glosario de Terminos">
+            <menupopup>
+            	<menuitem id="Nuevo Termino" label="Nuevo Termino" image="/images/zk16x16.png" visible="${listaMenusVer.contains(self.parent.parent.id.concat('/').concat(self.id))}">
+		        	<attribute name="onClick">
+						<![CDATA[
+							org.modelo.dto.Glosario glosario = new org.modelo.dto.Glosario();
+							Map parametros = new HashMap();
+							parametros.put("modo","N");
+							parametros.put("objeto",glosario);
+							Window window = (Window)Executions.createComponents("/WEB-INF/ventanas/editTerminoGlosario.zul", null,parametros);
+							window.doModal();
+						]]>
+					</attribute>
+		        </menuitem>
+            	<menuitem id="Lista de Terminos" label="Lista de Terminos" image="/images/zk16x16.png" visible="${listaMenusVer.contains(self.parent.parent.id.concat('/').concat(self.id))}">
+		        	<attribute name="onClick">
+						<![CDATA[
+							{
+								irOpcion("/WEB-INF/ventanas/lstGlosarioTerminos.zul");
+							}
+						]]>
+					</attribute>
+		        </menuitem>
+		        <menuitem id="Lista Administrativa de Terminos" label="Lista Administrativa de Terminos" image="/images/zk16x16.png" visible="${listaMenusVer.contains(self.parent.parent.id.concat('/').concat(self.id))}">
+		        	<attribute name="onClick">
+						<![CDATA[
+							{
+								irOpcion("/WEB-INF/ventanas/lstGlosarioTerminosTodos.zul");
+							}
+						]]>
+					</attribute>
+		        </menuitem>
+			</menupopup>
+		</menu>
+        <menuitem id="Inicio" label="${labels.inicio}">
+        	<attribute name="onClick">
+				<![CDATA[
+					{
+						irOpcion("/WEB-INF/ventanas/inicio.zul");
+					}
+				]]>
+			</attribute>
+        </menuitem>
+        <menuitem id="BuscarWilson" label="Buscar">
+        	<attribute name="onClick">
+				<![CDATA[
+					{
+						irOpcion("/WEB-INF/ventanas/buscar.zul");
+					}
+				]]>
+			</attribute>
+        </menuitem>
+    </menubar>
+     
+	<toolbarbutton image="/images/user-info-icon.png" self="@{define(pie)}"
+		if="${usuario != null and usuario ne app.securityConfig.guestUser}"
+		label="User Profile" style="color: #ffffff">
+		<attribute name="onClick">
+			{
+				//Object objeto = (Usuario)(box.getSelectedItem()).getValue();										
+				Map parametros = new HashMap();
+				parametros.put("modo","E");
+				parametros.put("objeto",usuario);
+				String ventana = "editUsuario.zul";
+				Window editUsuario = (Window)Executions.createComponents("/WEB-INF/ventanas/" + ventana, null,parametros);
+				editUsuario.doModal();
+			}
+		</attribute>
+	</toolbarbutton>
+	
+	<toolbarbutton image="/images/contrasenna.png"
+		self="@{define(pie)}"
+		if="${usuario != null and usuario ne app.securityConfig.guestUser}"
+		label="Change Password" style="color: #ffffff">
+		<attribute name="onClick">
+			{
+				Map parametros = new HashMap();
+				parametros.put("objeto",usuario);
+				Window cambiarPass = (Window)Executions.createComponents("/WEB-INF/ventanas/cambiarcontrasena.zul", null,
+				parametros);
+				cambiarPass.doModal();
+			}
+		</attribute>
+	</toolbarbutton>
+	
+	<toolbarbutton image="/images/salir.png"
+		self="@{define(pie)}"
+		if="${usuario != null and usuario ne app.securityConfig.guestUser}"
+		label="Exit" style="color: #ffffff">
+		<attribute name="onClick">
+			{
+				session.invalidate();
+				Executions.sendRedirect("/index.zul");
+			}
+		</attribute>
+	</toolbarbutton>
+
+	<window self="@{define(areatrabajo)}" id="targetArea" if="${usuario != null and usuario ne app.securityConfig.guestUser}" width="100%">
+		<attribute name="onCreate">
+			{
+				irOpcion("/WEB-INF/ventanas/inicio.zul");
+			}
+		</attribute>
+	</window>
+	
+	<div align="center" self="@{define(areatrabajo)}" if="${usuario == null or usuario eq app.securityConfig.guestUser}">
+		<vbox align="center">
+			<panel width="250px" title="Login"
+				border="normal" framable="false"
+				if="${usuario == null or usuario eq app.securityConfig.guestUser}">
+				<panelchildren>
+					<grid>
+						<columns>
+							<column width="100px" align="right"></column>
+							<column width="140px" align="left"></column>
+						</columns>
+						<rows>
+							<row>
+							<label value="Usuario:" style="font-size:10px"></label>
+							<textbox id="textLogin" width="130px"/>
+							</row>
+							<row>
+								<label value="Password" style="font-size:10px"></label>
+								<textbox id="textContrasena" type="password" width="130px">
+									<attribute name="onOK">
+										<![CDATA[
+											try {
+												usuario = servicioAdministrarConfiguracion.validarUsuario(textLogin.value, textContrasena.value);
+												if (usuario != null) {
+													obeCtx.setUsuarioActual(usuario);
+													//Executions.getCurrent().sendRedirect("/index.zul","_blank");
+													Executions.sendRedirect("/index.zul");
+												}
+											} catch (Exception obeex) {
+												Messagebox.show("Usuario y Password no Coinciden", "Error", Messagebox.OK, Messagebox.ERROR);
+											}
+										]]>
+									</attribute>
+								</textbox>
+							</row>
+							<row spans="2">
+								 <div align="center">
+									<button label="Login">
+										<attribute name="onClick">
+											<![CDATA[
+												try {
+													usuario = servicioAdministrarConfiguracion.validarUsuario(textLogin.value, textContrasena.value);
+													if (usuario != null) {
+														obeCtx.setUsuarioActual(usuario);
+														//Executions.getCurrent().sendRedirect("/index.zul","_blank");
+														Executions.sendRedirect("/indexAdm.zul");
+													}
+												} catch (Exception obeex) {
+													Messagebox.show("Wrong User ID and Password", "Error", Messagebox.OK, Messagebox.ERROR);
+												}
+											]]>						
+										</attribute>
+									</button>
+								</div>
+							</row>
+						</rows>
+					</grid>
+				</panelchildren>
+			</panel>
+		</vbox>
+	</div>
+	<zscript if="${usuario != null and usuario ne app.securityConfig.guestUser}">
+		<![CDATA[
+			List listaHijosMenu = menuPrincipal.getChildren();
+			List listaBorrar = new ArrayList();
+			for (Component hijosPrinc : listaHijosMenu)
+			{
+				if (hijosPrinc instanceof Menu)
+				{
+					/*boolean contMenu = false;
+					for (Component hijoMenu : hijosPrinc.getChildren())
+					{
+						System.out.println(((Menu)hijosPrinc).getLabel() + hijoMenu.isVisible());
+						if (hijoMenu.isVisible())
+						{
+							System.out.println(((Menu)hijosPrinc).getLabel() + hijoMenu);
+							contMenu = true;
+							break;
+						}
+					}
+					
+					if (contMenu)
+					{*/
+						Component primerHijo = hijosPrinc.getChildren().get(0);
+						if (primerHijo instanceof Menupopup)
+						{
+							List hijosPopups = primerHijo.getChildren();
+							boolean contPupus = false;
+							for (Component hijoPopup : hijosPopups)
+							{
+								if (hijoPopup.isVisible())
+								{
+									contPupus = true;
+									break;
+								}
+							}
+							if (!contPupus)
+							{
+								listaBorrar.add(primerHijo.getParent());
+							}
+						}
+					/*}
+					else
+					{
+						System.out.println("aqui2");
+						System.out.println(((Menu) hijosPrinc).getLabel());
+						listaBorrar.add(hijosPrinc);
+					}*/
+				}
+			}
+			
+			for (int i = 0; i < listaBorrar.size(); i++)
+			{
+				Component aBorrar = listaBorrar.get(i);
+				aBorrar.setVisible(false);
+			}
+		]]>	
+	</zscript>
+</zk>

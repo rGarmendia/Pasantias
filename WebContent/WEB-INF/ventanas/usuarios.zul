@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?variable-resolver class="org.zkoss.zkplus.spring.DelegatingVariableResolver"?>
+
+<?init class="org.zkoss.zkplus.databind.AnnotateDataBinderInit" arg0="./usuarios"?>
+
+<zk xmlns:n="http://www.zkoss.org/2005/zk/native">
+
+	<zscript src="/WEB-INF/commons/configureContext.zs" />
+	<zscript src="/WEB-INF/commons/configureSecurity.zs" />
+
+	<zscript>
+	<![CDATA[
+List all_objetos = new ArrayList();
+
+void doLoadData()
+{
+	all_objetos = servicioAdministrarConfiguracion.buscarTodosUsuarios();
+	all_objetos.remove(usuario);
+	if (all_objetos.size() == 0) {
+		alert("There Are Not Users Registered");
+		}
+	binder.loadAll();
+}
+doLoadData();
+]]>
+</zscript>
+
+	<panel title="Users System"
+		id="usuarios" height="100%" border="normal" closable="true" >
+		<toolbar mold="default" style="background:#fb4e4e;">
+
+			<button label="New User" image="/images/icons/incluir.png"
+				>
+				<attribute name="onClick">
+						<![CDATA[
+Object objeto = new Usuario();
+Map parametros = new HashMap();
+parametros.put("modo","N");
+parametros.put("objeto",objeto);
+Window window = (Window)Executions.createComponents("/WEB-INF/ventanas/editUsuario.zul", null,parametros);
+window.doModal();
+if (window.getAttribute("accion").equals("A"))
+{
+	all_objetos.clear();
+	doLoadData();
+}
+			/*nuevoNodo = servicioEstructuraDocumental.crearNodo("NOCON",
+				areaconocimiento, usuario);*/
+		/*Juego juegoA = new Juego();
+
+		command = new ObjectCommand();
+		command.parametros.put("modo","inclusion");
+		command.setObjeto(juegoA);
+		command.dialogo = true;
+		command.operacion = OperacionHelper.getOperacion(OperationType.INCLUIR);
+		command.setArchivoZul("/WEB-INF/obelisco/modules/custom/editJuego.zul");
+
+		if (command.execute(null) == ActionType.ACEPTAR) {
+			all_juegos.clear();
+			binder.loadAll();
+			doLoadData();
+		}*/
+
+
+]]>
+						</attribute>
+			</button>
+			<button label="Delete User" image="/images/papelera.png">
+				<attribute name="onClick">
+						<![CDATA[
+						         Set items = box.getSelectedItems();
+						         if (items.size() == 0)
+						         {
+						        	 Messagebox
+						     			.show("You Must Select At Least One Record",
+						     					"Delete", Messagebox.OK,Messagebox.INFORMATION);
+						         }
+						         else
+						         {
+						        	 for (Iterator iter = items.iterator(); iter.hasNext();) {
+						        		 Listitem item = (Listitem) iter.next();
+						        		 Object objetoE = (Usuario)item.getValue();
+						        		 
+						        		 if (objetoE.getLogin().equals(usuario.getLogin()))
+						        		 {
+						        			 Messagebox.show("Can't Not Delete The Same User",
+													    "Delete", Messagebox.OK,
+													    Messagebox.INFORMATION); 
+						        		 }
+						        		 else
+						        		 {
+							        		 if (Messagebox.show("Are You Sure Delete That Record?",
+												    "Delete", Messagebox.YES + Messagebox.NO,
+												    Messagebox.QUESTION) == Messagebox.YES) 
+							        		 {	    							
+							        			 
+							        			servicioAdministrarConfiguracion.borrarUsuario(objetoE);
+							        											        		 
+							        		 }
+						        		 }
+						        	 }
+						        	 doLoadData();
+						         }	
+]]>
+</attribute>
+</button>
+<button label="Edit User" image="/images/icons/editar.png">
+				<attribute name="onClick">
+						<![CDATA[
+						         Set items = box.getSelectedItems();
+						         if (items.size() == 0)
+						         {
+						        	 Messagebox
+						     			.show("You Must Select At Least One Record",
+						     					"Edit", Messagebox.OK,Messagebox.INFORMATION);
+						         }
+						         else
+						         {
+						        	 if (items.size() > 1)
+							         {
+							        	 Messagebox
+							     			.show("You Must Select Just One Record",
+							     					"Edit", Messagebox.OK,Messagebox.INFORMATION);
+							         }
+						        	 else
+						        	 {
+						        	 
+					        		 	Object objeto = (Usuario)(box.getSelectedItem()).getValue();										
+										Map parametros = new HashMap();
+										parametros.put("modo","E");
+										parametros.put("objeto",objeto);
+										Window window = (Window)Executions.createComponents("/WEB-INF/ventanas/editUsuario.zul", null,parametros);
+										window.doModal();
+										if (window.getAttribute("accion").equals("A"))
+										{
+											all_objetos.clear();
+											doLoadData();
+										}
+						        	 }
+						         }	
+]]>
+</attribute>
+</button>
+		</toolbar>
+<panelchildren style="padding : 5px;">
+<panel title="" height="450px">
+				<panelchildren >
+					<borderlayout>
+						<center autoscroll="true">
+					
+						 <listbox id="box" fixedLayout="true" multiple="true"   
+						 mold="paging" pageSize="20" width="100%" model="@{all_objetos}" >
+    <listhead>
+    <listheader
+											label="User" align="center" valign="middle"
+											width="20%" />
+										<listheader
+											label="Names" align="center" valign="middle"
+											width="30%" />
+										<listheader
+											label="Email" align="center" valign="middle"
+											width="20%" />										
+										<listheader
+											label="Rol" align="center" valign="middle"
+											width="20%" />
+										<listheader
+											label="Status" align="center" valign="middle"
+											width="10%" />
+										
+    </listhead>
+    <listitem sclass="row-border item"
+							self="@{each=objeto}" value="@{objeto}">
+        <listcell label="@{objeto.login}" />
+  		<listcell label="@{objeto.nombreCompleto}"/>
+  		<listcell label="@{objeto.correo}"/>  		
+  		<listcell label="@{objeto.rolSistema.nombre}"/>
+  		<listcell label="@{objeto.estatus}"/>
+    </listitem>
+</listbox> 
+							<!-- <grid preloadSize="20"
+								model="@{all_objetos}" mold="paging" pageSize="20" width="170%" >
+									<columns
+										sizable="false">
+										<column
+											label="identity card/Rif" align="center" valign="middle"
+											width="12%" />
+										<column
+											label="Name" align="center" valign="middle"
+											width="20%" />
+										<column
+											label="Last Name" align="center" valign="middle"
+											width="20%" />
+										<column
+											label="Phone" align="center" valign="middle"
+											width="10%" />
+										<column
+											label="Phone 2r" align="center" valign="middle"
+											width="10%" />
+										<column
+											label="representative" align="center" valign="middle"
+											width="20%" />
+										<column
+											label="" align="center" valign="middle" width="8%"/>
+									</columns>
+									<rows>
+										<row
+											self="@{each=objeto}" value="@{objeto}" >
+											<label
+												value="@{objeto.idcliente}"	/>
+											<label
+												value="@{objeto.nombre}"	/>											
+											<label
+												value="@{objeto.apellido}">
+											</label>
+											<label
+												value="@{objeto.telefonoLocal}"	/>
+											<label
+												value="@{objeto.telefonoCelular}"	>
+											</label>	
+											<label
+												value="@{objeto.representante}"/>
+											
+											<hbox
+												spacing="5px">												
+												<toolbarbutton
+													style="font-size: 9px; font-weight: normal;"
+													objeto="@{objeto}"
+													use="org.sevenlabs.vista.zk.controls.OperacionToolbarbutton"
+													image="/images/icons/16x16/edit.png"
+													tooltiptext="Editar ...">
+													<attribute name="onClick">
+														<![CDATA[
+														{
+															c = event.target;
+															Cliente objeto = c.objeto;
+															Map parametros = new HashMap();
+															parametros.put("modo","E");
+															parametros.put("objeto",objeto);
+															Window window = (Window)Executions.createComponents("/WEB-INF/sistema/editCliente.zul", null,parametros);
+															window.doModal();
+															if (window.getAttribute("accion").equals("A"))
+															{
+																all_objetos.clear();
+																doLoadData();
+															}
+															
+														}
+														]]>
+													</attribute>
+												</toolbarbutton>
+												<toolbarbutton
+													style="font-size: 9px; font-weight: normal;"
+													objeto="@{objeto}"
+													use="org.sevenlabs.vista.zk.controls.OperacionToolbarbutton"
+													image="/images/icons/16x16/delete2.png"
+													tooltiptext="Eliminar ...">
+													<attribute name="onClick">
+														<![CDATA[
+										     				c = event.target;
+										    				objeto = c.objeto;
+										    				if (objeto != null) {
+										    					    //IF bUSCAR SI Cliente no esta en algun contrato FALTA
+										    					    //{
+										    					    	servicioAdministrarGPS.borrarCliente(objeto);
+										    					    	doLoadData();
+										    					    //}
+										    					    //else
+										    					    //{
+										    					    //	Messagebox
+									    							//	.show("Este Juego No Se Puede Eliminar Ya Que Se Finalizo",
+									    							//			"Eliminar", Messagebox.OK,Messagebox.INFORMATION);
+										    					    //}
+										    				}				
+														]]>
+													</attribute>
+												</toolbarbutton>									
+											</hbox>
+										</row>
+									</rows> 
+							</grid>	 -->					
+						</center>
+					</borderlayout>
+				</panelchildren>
+			</panel>
+		</panelchildren>
+		<zscript>
+		<![CDATA[
+
+]]>
+		</zscript>
+
+	</panel>
+
+
+</zk>

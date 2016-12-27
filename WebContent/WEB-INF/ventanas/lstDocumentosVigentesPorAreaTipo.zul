@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?variable-resolver class="org.zkoss.zkplus.spring.DelegatingVariableResolver"?>
+
+<?init class="org.zkoss.zkplus.databind.AnnotateDataBinderInit" arg0="./lstDocumentosVigentesPorAreaTipo"?>
+<zk xmlns:n="http://www.zkoss.org/2005/zk/native">
+
+	<zscript src="/WEB-INF/commons/configureContext.zs" />
+	<zscript src="/WEB-INF/commons/configureSecurity.zs" />
+	<zscript>
+	<![CDATA[
+		List areas = new ArrayList();
+		List exs = new ArrayList();
+		List tiposDocs = servicioAdministrarConfiguracion.buscarTiposDocumentosTodos();
+		
+	    void cargarCombos()
+	    {
+	    	all_objetos.clear();
+	    	
+	    	for (int i = 0; i < org.modelo.dto.TipoDocumento.TIPOS_PRIVADOS.length; i++)
+	    	{
+	    		exs.add(org.modelo.dto.TipoDocumento.TIPOS_PRIVADOS[i]);
+	    	}
+	    	
+	    	for (org.modelo.dto.TipoDocumento tipDoc : tiposDocs)
+	    	{
+	    		if (!exs.contains(tipDoc.getCodigo()))
+	    		{
+	    			List temp = servicioAdministrarConfiguracion.buscarAreasNoVigenteDocumentosPorTipo(tipDoc, null);
+	    			for (String sts : temp)
+	    			{
+	    				if (!areas.contains(sts))
+	    				{
+	    					areas.add(sts);
+	    				}
+	    			}
+	    		}
+	    	}
+	    	
+			cmbareas.setModel(new ListModelList(areas));
+			cmbareas.setSelectedItem(null);
+			
+			cmbtipos.setModel(new ListModelList(tiposDocs));
+			cmbtipos.setSelectedItem(null);
+			binder.loadAll();
+	    }
+		List all_objetos = new ArrayList();
+	]]>
+	</zscript>
+	<panel title="${labels.documentos}" id="lstDocumentosVigentesPorAreaTipo" height="550px" border="normal" closable="true" >
+		<toolbar mold="default" style="background:#635fa8;">
+			<button label="${labels.nuevo} ${labels.documento}" image="/images/notebook_add2.png"  id="Incluir">
+				<attribute name="onClick">
+					<![CDATA[
+						Object objeto = new org.modelo.dto.Documento();
+						
+						Map parametros = new HashMap();
+						objeto.setEstatus("Nuevo");
+						Window window = (Window)Executions.createComponents("/WEB-INF/ventanas/selTipoDocumento.zul", null,parametros);
+						window.doModal();
+						if (window.getAttribute("accion").equals("A"))
+						{
+							org.modelo.dto.TipoDocumento tipDoc = window.getAttribute("tipoSel");
+							parametros = new HashMap();
+							parametros.put("modo","N");
+							parametros.put("objeto",objeto);
+							parametros.put("tipo",tipDoc);
+							objeto.setEstatus("Nuevo");
+							window = (Window)Executions.createComponents("/WEB-INF/ventanas/editDocumento.zul", null,parametros);
+							window.doModal();
+							if (window.getAttribute("accion").equals("A"))
+							{
+								cargarCombos();
+							}	
+						}
+						
+					]]>
+				</attribute>
+			</button>
+		</toolbar>
+				<panelchildren style="padding : 3px; border-style:none">
+					<hbox align="center">
+						<label  value="Tipo de Documento:"></label>
+						<combobox id="cmbtipos" model="@{tiposDocs}" readonly="true">
+							<attribute name="onSelect">
+								<![CDATA[
+									all_objetos.clear();
+									all_objetos.addAll(servicioAdministrarConfiguracion.buscarDocumentosVigentesPorAreaTipo(cmbareas.getSelectedItem() != null ? cmbareas.getSelectedItem().getValue() : null, cmbtipos.getSelectedItem() != null ? cmbtipos.getSelectedItem().getValue() : null, exs));
+									binder.loadAll();
+								]]>
+							</attribute>
+							<comboitem self="@{each=tds}" label="@{tds.nombre}" value="@{tds}">
+							</comboitem>
+						</combobox>
+						<separator></separator>
+						<separator></separator>
+						<label  value="Area:"></label>
+						<combobox id="cmbareas" model="@{areas}" readonly="true">
+							<attribute name="onSelect">
+								<![CDATA[
+									all_objetos.clear();
+									all_objetos.addAll(servicioAdministrarConfiguracion.buscarDocumentosVigentesPorAreaTipo(cmbareas.getSelectedItem() != null ? cmbareas.getSelectedItem().getValue() : null, cmbtipos.getSelectedItem() != null ? cmbtipos.getSelectedItem().getValue() : null, exs));
+									binder.loadAll();
+								]]>
+							</attribute>
+							<comboitem self="@{each=ars}" label="@{ars}" value="@{ars}">
+							</comboitem>
+						</combobox>
+						<button image="images/undo16.png">
+							<attribute name="onClick">
+								<![CDATA[
+									cargarCombos();
+								]]>
+							</attribute>
+						</button>
+					</hbox>
+					<separator></separator>
+					<borderlayout height="100%">
+    					<center autoscroll="true" style="border-style:none">
+						 	<listbox id="box" fixedLayout="true" multiple="true" mold="paging" pageSize="20" width="100%" model="@{all_objetos}" 
+							checkmark="true" height="94%">
+								<attribute name="onSelect">
+									<![CDATA[
+									    if (box.getSelectedItem() != null)
+									    {
+											if (!((org.modelo.dto.Documento)box.getSelectedItem().getValue()).getEstatus().equals("Nuevo"))
+											{
+												box.getSelectedItem().setSelected(false);
+											}
+									    }
+									]]>
+								</attribute>
+    							<listhead>
+    								<listheader label="" align="center" valign="middle" width="5%" />
+    								<listheader label="${labels.codigo}" align="center" valign="middle" width="5%" />
+									<listheader label="${labels.titulo}" align="center" valign="middle" width="15%" />
+									<listheader label="Area" align="center" valign="middle" width="10%" />
+									<listheader label="SubArea" align="center" valign="middle" width="10%" />
+									<listheader label="${labels.elaboradoPor}" align="center" valign="middle" width="15%" />
+									<listheader label="${labels.fechaDeElaboracion}" align="center" valign="middle" width="10%" />
+									<listheader label="Ops." align="center" valign="middle" width="5%" />
+    							</listhead>
+    							<listitem sclass="row-border item" self="@{each=objeto}" value="@{objeto}">
+    								<listcell/>
+									<listcell label="@{objeto.codigo}"/>
+  									<listcell label="@{objeto.titulo}"/>
+  									<listcell label="@{objeto.area.nombre}"/>
+  									<listcell label="">
+  										<attribute name="onCreate">
+											<![CDATA[
+												org.modelo.dto.Documento dc = ((Listitem)self.getParent()).getValue();
+												if (dc.getSubArea().equals(dc.getArea()))
+												{
+													self.setLabel("");
+												}
+												else
+												{
+													self.setLabel(dc.getSubArea().getNombre());
+												}
+											]]>
+										</attribute>
+  									</listcell>
+  									<listcell label="">
+  										<attribute name="onCreate">
+											<![CDATA[
+												org.modelo.dto.Usuario usu = ((org.modelo.dto.Documento)((Listitem)self.getParent()).getValue()).getUsuarioElaborador();
+												self.setLabel(usu.getNombres() + " " + usu.getApellidos());
+											]]>
+										</attribute>
+  									</listcell>
+  									<listcell label="@{objeto.fechaElaboracion, converter='org.zkforge.converters.DateCustom'}" >
+										<custom-attributes format="dd/MM/yyyy"/>
+									</listcell>
+  									<listcell>
+  										<image tooltiptext="${labels.ver} ${labels.documento}" src="/images/notebook_information.png" id="Consultar" width="18px" height="18px">
+											<attribute name="onClick">
+												<![CDATA[
+													((Listbox)self.getParent().getParent().getParent()).clearSelection();
+													Object objeto = ((Listitem)self.getParent().getParent()).getValue();
+													Map parametros = new HashMap();
+													parametros.put("modo","C");
+													parametros.put("objeto",objeto);
+													parametros.put("tipo",objeto.getTipoDocumento());
+													Window window = (Window)Executions.createComponents("/WEB-INF/ventanas/editDocumento.zul", null,parametros);
+													window.doModal();	
+												]]>
+											</attribute>
+										</image>
+  									</listcell>
+    							</listitem>
+							</listbox>
+						</center>
+					</borderlayout>
+		</panelchildren>
+		<zscript src="/WEB-INF/commons/configureSecurity.zs" />
+	</panel>
+	<zscript>
+		<![CDATA[
+			cargarCombos();
+		]]>
+	</zscript>
+</zk>

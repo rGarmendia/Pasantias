@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?variable-resolver class="org.zkoss.zkplus.spring.DelegatingVariableResolver"?>
+<?init class="org.zkoss.zkplus.databind.AnnotateDataBinderInit"  arg0="./selTipoDocumento" ?>
+
+<zk xmlns:n="http://www.zkoss.org/2005/zk/native"
+	xmlns:h="http://www.w3.org/1999/xhtml">
+
+
+	<zscript src="/WEB-INF/commons/configureContext.zs" />
+	<zscript src="/WEB-INF/commons/configureDialog.zs" />
+
+	<zscript>
+	<![CDATA[
+			List exs = new ArrayList();
+	    	for (int i = 0; i < org.modelo.dto.TipoDocumento.TIPOS_PRIVADOS.length; i++)
+	    	{
+	    		exs.add(org.modelo.dto.TipoDocumento.TIPOS_PRIVADOS[i]);
+	    	}
+	    	
+			 List tiposDocs = servicioAdministrarConfiguracion.buscarTiposDocumentosTodos();
+	         void selOpcion(org.modelo.dto.TipoDocumento opcion)
+	         {
+	       	 	selTipoDocumento.setAttribute("accion","A");
+				selTipoDocumento.setAttribute("tipoSel",opcion);
+				selTipoDocumento.detach();	
+	         }
+	]]>						
+		
+	</zscript>
+
+	<window id="selTipoDocumento" title="Tipos de Productos" maximizable="false"
+		maximized="false" border="normal" width="300px" closable="true">
+		<caption image="/images/window.png" />
+		<style src="/css/mystyle.css" dynamic="true" />
+		<space></space>
+			<space></space>
+		<div height="85%" align="center">
+			<textbox visible="false" />
+			<combobox id="cmbtipos" model="@{tiposDocs}" readonly="true">
+							<attribute name="onSelect">
+								<![CDATA[
+									selOpcion((org.modelo.dto.TipoDocumento)cmbtipos.getSelectedItem().getValue());
+								]]>
+							</attribute>
+							<comboitem self="@{each=tdcs}" label="@{tdcs.nombre}" value="@{tdcs}">
+								<attribute name="onCreate">
+								<![CDATA[
+									if (exs.contains(((org.modelo.dto.TipoDocumento) self.getValue()).getCodigo()))
+									{
+										self.detach();
+									}
+								]]>
+							</attribute>
+							</comboitem>
+						</combobox>
+		</div>
+		<space></space>
+			<space></space>
+		
+		<zscript>
+		<![CDATA[
+		      
+				]]>	
+			</zscript>
+
+
+	</window>
+
+
+</zk>

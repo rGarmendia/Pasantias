@@ -1,0 +1,12 @@
+.obligatorio:before {
+   content: "* ";
+   color: red;
+}
+
+.z-combobox-inp {
+    height: 25px;
+    font-size : 14px;
+}
+.z-combobox .z-combobox-btn {
+    height: 23px;
+}

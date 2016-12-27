@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?variable-resolver class="org.zkoss.zkplus.spring.DelegatingVariableResolver"?>
+
+<?init class="org.zkoss.zkplus.databind.AnnotateDataBinderInit" arg0="./cambiarcontasena" ?>
+
+
+<zk xmlns:n="http://www.zkoss.org/2005/zk/native">
+
+	<zscript src="/WEB-INF/commons/configureContext.zs" />
+	<zscript>
+		<![CDATA[
+Object objeto = arg.get("objeto");
+		         if (usuario != null)
+		         {
+		        	 objeto = usuario;
+		         }
+		         else
+		         {
+		        	 objeto = usuarioCliente;
+		         }
+
+				]]>
+				</zscript>
+	<window id="cambiarcontasena" title="Cambiar Password"
+		maximizable="false" border="normal" width="300px" height="270px">
+		<caption image="/images/window.png" />
+		<style src="/css/mystyle.css" dynamic="true" />
+		<div height="75%">
+			<grid>
+				<columns>
+					<column width="40%" align="right" />
+					<column width="60%" />
+				</columns>
+				<rows>
+					<row>
+						<label value="User" />
+						<textbox id="login" maxlength="20" cols="20"
+							readonly="true" value="@{objeto.login}" />
+					</row>
+					<row>
+						<label value="Password Actual" />
+						<textbox id="txtOldPass" cols="10" maxlength="10"
+							type="password" />
+					</row>
+					<row>
+						<label value="Nuevo Password" />
+						<textbox id="txtNewPass" cols="10" maxlength="10"
+							type="password" />
+					</row>
+					<row>
+						<label value="Confirmar Password" />
+						<textbox id="txtConfirmPass" cols="10" maxlength="10"
+							type="password" />
+					</row>
+				</rows>
+			</grid>
+		</div>
+		<div align="right" height="25%" style="background:#635fa8">
+			<button id="btnOK" label="Save"
+				image="/images/aceptar.png" orient="vertical">
+				<attribute name="onClick">
+			try {
+				servicioAdministrarConfiguracion.cambiarContrasena(objeto, txtOldPass.value, txtNewPass.value, txtConfirmPass.value);
+				alert("Password Changed Successfully");
+				cambiarcontasena.detach();
+			}
+			catch (com.sevenlabs.exception.SevenLabsException obeex) {
+				Messagebox.show(obeex.message, "Error", Messagebox.OK, Messagebox.ERROR);
+			}
+		</attribute>
+			</button>
+			<button id="btnCancel" label="Cancel" 
+				image="/images/remover.png" orient="vertical">
+				<attribute name="onClick">
+				cambiarcontasena.detach();
+			</attribute>
+			</button>
+
+		</div>
+	</window>
+</zk>

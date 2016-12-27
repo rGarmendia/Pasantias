@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?variable-resolver class="org.zkoss.zkplus.spring.DelegatingVariableResolver"?>
+
+<?init class="org.zkoss.zkplus.databind.AnnotateDataBinderInit" arg0="./lstDocumentosPorEstadoArea"?>
+<zk xmlns:n="http://www.zkoss.org/2005/zk/native">
+
+	<zscript src="/WEB-INF/commons/configureContext.zs" />
+	<zscript src="/WEB-INF/commons/configureSecurity.zs" />
+	<zscript>
+	<![CDATA[
+		List estatus = new ArrayList();
+		List areas = new ArrayList();
+		List tiposDocs = servicioAdministrarConfiguracion.buscarTiposDocumentosTodos();
+		List exs = new ArrayList();
+		
+	    void cargarCombos()
+	    {
+	    	all_objetos.clear();
+	    	
+	    	for (int i = 0; i < org.modelo.dto.TipoDocumento.TIPOS_PRIVADOS.length; i++)
+	    	{
+	    		exs.add(org.modelo.dto.TipoDocumento.TIPOS_PRIVADOS[i]);
+	    	}
+	    	
+	    	for (org.modelo.dto.TipoDocumento tipDoc : tiposDocs)
+	    	{
+	    		if (!exs.contains(tipDoc.getCodigo()))
+	    		{
+	    			List temp = servicioAdministrarConfiguracion.buscarEstadosNoVigenteDocumentosPorTipo(tipDoc, null);
+	    			for (String sts : temp)
+	    			{
+	    				if (!estatus.contains(sts))
+	    				{
+	    					estatus.add(sts);
+	    				}
+	    			}
+	    			
+	    			temp = servicioAdministrarConfiguracion.buscarAreasNoVigenteDocumentosPorTipo(tipDoc, null);
+	    			for (String sts : temp)
+	    			{
+	    				if (!areas.contains(sts))
+	    				{
+	    					areas.add(sts);
+	    				}
+	    			}
+	    		}
+	    	}
+	    	
+			cmbareas.setModel(new ListModelList(areas));
+			cmbstatus.setModel(new ListModelList(estatus));
+			cmbareas.setSelectedItem(null);
+			cmbstatus.setSelectedItem(null);
+			binder.loadAll();
+	    }
+		List all_objetos = new ArrayList();
+		
+	]]>
+	</zscript>
+	<panel title="${labels.documentos} Por Estado Y Area" id="lstDocumentosPorEstadoArea" height="550px" border="normal" closable="true" >
+		<toolbar mold="default" style="background:#635fa8;">
+			<button label="${labels.nuevo} ${labels.documento}" image="/images/notebook_add2.png"  id="Incluir">
+				<attribute name="onClick">
+					<![CDATA[
+						Object objeto = new org.modelo.dto.Documento();
+						
+						Map parametros = new HashMap();
+						objeto.setEstatus("Nuevo");
+						Window window = (Window)Executions.createComponents("/WEB-INF/ventanas/selTipoDocumento.zul", null,parametros);
+						window.doModal();
+						if (window.getAttribute("accion").equals("A"))
+						{
+							org.modelo.dto.TipoDocumento tipDoc = window.getAttribute("tipoSel");
+							parametros = new HashMap();
+							parametros.put("modo","N");
+							parametros.put("objeto",objeto);
+							parametros.put("tipo",tipDoc);
+							objeto.setEstatus("Nuevo");
+							window = (Window)Executions.createComponents("/WEB-INF/ventanas/editDocumento.zul", null,parametros);
+							window.doModal();
+							if (window.getAttribute("accion").equals("A"))
+							{
+								cargarCombos();
+							}	
+						}
+					]]>
+				</attribute>
+			</button>
+			<button label="${labels.borrar} ${labels.todos} ${labels.documentos} ${labels.seleccionados}" image="/images/notebook_delete4.png" id="EliminarTodo">
+				<attribute name="onClick">
+					<![CDATA[
+						if (Messagebox.show("Seguro de Eliminar Todos Los Elementos Seleccionados?", "Eliminar Todos", Messagebox.OK + Messagebox.CANCEL, Messagebox.INFORMATION) == Messagebox.OK)
+						{
+							for (Listitem li : box.getSelectedItems())
+							{
+								org.modelo.dto.Documento doc = li.getValue();
+								try
+								{
+									if (doc.getEstatus().equals("Nuevo"))
+									{
+						    			servicioAdministrarConfiguracion.eliminarDocumento(doc);
+									}	
+								}
+								catch(org.sevenlabs.exception.SevenLabsException e)
+								{
+									alert(e.getMessage());
+								}
+							}
+							cargarCombos();
+						}
+					]]>
+				</attribute>
+			</button>
+		</toolbar>
+				<panelchildren style="padding : 3px; border-style:none">
+					<hbox align="center">
+						<label  value="${labels.estatus}:"></label>
+						<combobox id="cmbstatus" model="@{estatus}" readonly="true" >
+							<attribute name="onSelect">
+								<![CDATA[
+									all_objetos.clear();
+									for (org.modelo.dto.TipoDocumento tipDoc : tiposDocs)
+									{
+										if (!exs.contains(tipDoc.getCodigo()))
+										{
+											all_objetos.addAll(servicioAdministrarConfiguracion.buscarDocumentosPorEstadoAreaTipo(cmbstatus.getSelectedItem() != null ? cmbstatus.getSelectedItem().getValue() : null, cmbareas.getSelectedItem() != null ? cmbareas.getSelectedItem().getValue() : null, tipDoc, null));
+										}
+									}
+									binder.loadAll();
+								]]>
+							</attribute>
+							<comboitem self="@{each=est}" label="@{est}" value="@{est}">
+							</comboitem>
+						</combobox>		
+						<separator></separator>
+						<separator></separator>
+						<label  value="Area:"></label>
+						<combobox id="cmbareas" model="@{areas}" readonly="true">
+							<attribute name="onSelect">
+								<![CDATA[
+									all_objetos.clear();
+									for (org.modelo.dto.TipoDocumento tipDoc : tiposDocs)
+									{
+										if (!exs.contains(tipDoc.getCodigo()))
+										{
+											all_objetos.addAll(servicioAdministrarConfiguracion.buscarDocumentosPorEstadoAreaTipo(cmbstatus.getSelectedItem() != null ? cmbstatus.getSelectedItem().getValue() : null, cmbareas.getSelectedItem() != null ? cmbareas.getSelectedItem().getValue() : null, servicioAdministrarConfiguracion.buscarTipoDocumentoPorCodigo(new Integer(1)), null));
+										}
+									}
+									binder.loadAll();
+								]]>
+							</attribute>
+							<comboitem self="@{each=ars}" label="@{ars}" value="@{ars}">
+							</comboitem>
+						</combobox>
+						<button image="images/undo16.png">
+							<attribute name="onClick">
+								<![CDATA[
+									cargarCombos();
+								]]>
+							</attribute>
+						</button>
+					</hbox>
+					<separator></separator>
+					<borderlayout height="100%">
+    					<center autoscroll="true" style="border-style:none">
+						 	<listbox id="box" fixedLayout="true" multiple="true" mold="paging" pageSize="20" width="100%" model="@{all_objetos}" 
+							checkmark="true" height="94%">
+								<attribute name="onSelect">
+									<![CDATA[
+									    if (box.getSelectedItem() != null)
+									    {
+											if (!((org.modelo.dto.Documento)box.getSelectedItem().getValue()).getEstatus().equals("Nuevo"))
+											{
+												box.getSelectedItem().setSelected(false);
+											}
+									    }
+									]]>
+								</attribute>
+    							<listhead>
+    								<listheader label="" align="center" valign="middle" width="5%" />
+    								<listheader label="${labels.codigo}" align="center" valign="middle" width="5%" />
+									<listheader label="${labels.titulo}" align="center" valign="middle" width="15%" />
+									<listheader label="Area" align="center" valign="middle" width="10%" />
+									<listheader label="SubArea" align="center" valign="middle" width="10%" />
+									<listheader label="${labels.estatus}" align="center" valign="middle" width="10%" />
+									<listheader label="${labels.usuarioActual}" align="center" valign="middle" width="15%" />
+									<listheader label="${labels.elaboradoPor}" align="center" valign="middle" width="15%" />
+									<listheader label="${labels.fechaDeElaboracion}" align="center" valign="middle" width="10%" />
+									<listheader label="Ops." align="center" valign="middle" width="5%" />
+    							</listhead>
+    							<listitem sclass="row-border item" self="@{each=objeto}" value="@{objeto}">
+    								<listcell/>
+									<listcell label="@{objeto.codigo}"/>
+  									<listcell label="@{objeto.titulo}"/>
+  									<listcell label="@{objeto.area.nombre}"/>
+  									<listcell label="">
+  										<attribute name="onCreate">
+											<![CDATA[
+												org.modelo.dto.Documento dc = ((Listitem)self.getParent()).getValue();
+												if (dc.getSubArea().equals(dc.getArea()))
+												{
+													self.setLabel("");
+												}
+												else
+												{
+													self.setLabel(dc.getSubArea().getNombre());
+												}
+											]]>
+										</attribute>
+  									</listcell>
+  									<listcell label="@{objeto.estatus}"/>
+  									<listcell label="">
+  										<attribute name="onCreate">
+											<![CDATA[
+											    if (((org.modelo.dto.Documento)((Listitem)self.getParent()).getValue()).getUsuarioActual() != null)
+											    {
+													org.modelo.dto.Usuario usu = ((org.modelo.dto.Documento)((Listitem)self.getParent()).getValue()).getUsuarioActual();
+													self.setLabel(usu.getNombres() + " " + usu.getApellidos());
+											    }
+											]]>
+										</attribute>
+  									</listcell>
+  									<listcell label="">
+  										<attribute name="onCreate">
+											<![CDATA[
+												org.modelo.dto.Usuario usu = ((org.modelo.dto.Documento)((Listitem)self.getParent()).getValue()).getUsuarioElaborador();
+												self.setLabel(usu.getNombres() + " " + usu.getApellidos());
+											]]>
+										</attribute>
+  									</listcell>
+  									<listcell label="@{objeto.fechaElaboracion, converter='org.zkforge.converters.DateCustom'}" >
+										<custom-attributes format="dd/MM/yyyy"/>
+									</listcell>
+  									<listcell>
+  										<image tooltiptext="${labels.editar} ${labels.documento}" src="/images/editar.png" id="Editar" width="18px" height="18px">
+											<attribute name="onClick">
+												<![CDATA[
+													((Listbox)self.getParent().getParent().getParent()).clearSelection();
+													Object objeto = ((Listitem)self.getParent().getParent()).getValue();
+													Map parametros = new HashMap();
+													parametros.put("modo","E");
+													parametros.put("objeto",objeto);
+													parametros.put("tipo",objeto.getTipoDocumento());
+													Window window = (Window)Executions.createComponents("/WEB-INF/ventanas/editDocumento.zul", null,parametros);
+													window.doModal();
+													if (window.getAttribute("accion").equals("A"))
+													{
+														cargarCombos();
+													}	
+												]]>
+											</attribute>
+										</image>
+										<image tooltiptext="${labels.borrar} ${labels.documento}" src="/images/notebook_delete.png" id="Eliminar" width="18px" height="18px">
+											<attribute name="onClick">
+												<![CDATA[
+													org.modelo.dto.Documento doc = ((Listitem)self.getParent().getParent()).getValue();
+													try
+													{
+														if (doc.getEstatus().equals("Nuevo"))
+														{
+												    		servicioAdministrarConfiguracion.eliminarDocumento(doc);
+												    		cargarCombos();
+														}	
+													}
+													catch(Exception e)
+													{
+														System.out.println(e.getMessage());
+														alert("EL Documento No Puede Ser Eliminado");
+													}
+													
+												]]>
+											</attribute>
+										</image>
+  									</listcell>
+    							</listitem>
+							</listbox>
+						</center>
+					</borderlayout>
+		</panelchildren>
+		<zscript src="/WEB-INF/commons/configureSecurity.zs" />
+	</panel>
+	<zscript>
+		<![CDATA[
+			cargarCombos();
+		]]>
+	</zscript>
+</zk>

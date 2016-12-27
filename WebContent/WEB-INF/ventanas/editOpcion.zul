@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?variable-resolver class="org.zkoss.zkplus.spring.DelegatingVariableResolver"?>
+<?init class="org.zkoss.zkplus.databind.AnnotateDataBinderInit"  arg0="./editOpcion" ?>
+
+<zk xmlns:n="http://www.zkoss.org/2005/zk/native"
+	xmlns:h="http://www.w3.org/1999/xhtml">
+
+
+	<zscript src="/WEB-INF/commons/configureContext.zs" />
+	<zscript src="/WEB-INF/commons/configureDialog.zs" />
+
+	<zscript>
+		<![CDATA[
+		     
+			org.modelo.dto.Opcion opcion = arg.get("objeto");
+			String modo = arg.get("modo");
+			
+			List estatuss= new ArrayList();
+			estatuss.add("Activo");
+			estatuss.add("Inactivo");
+		]]>						
+	</zscript>
+	<window id="editOpcion" title="${labels.opcion}" maximizable="false" maximized="false" border="normal" width="650px" height="350px">
+		<caption image="/images/window.png" />
+		<style src="/css/mystyle.css" dynamic="true" />
+		<div height="80%">
+			<textbox visible="false" />
+			<tabbox orient="horizontal">
+				<tabs width="120px">
+					<tab label="${labels.datosGenerales}" />
+				</tabs>
+				<tabpanels>
+					<tabpanel>
+						<grid>
+							<columns>
+								<column width="20%" align="right" />
+								<column width="80%" />
+							</columns>
+							<rows>
+								<row if="${modo eq 'E'}"> 
+									<label value="${labels.codigo}" />
+									<label value="@{opcion.codigo}"/>
+								</row>
+								<row >
+									<label class="obligatorio" value="${labels.nombre}" />
+									<textbox maxlength="60" id="txtnombre" cols="60" value="@{opcion.nombre}"/>									
+								</row>
+								<row>
+									<label class="obligatorio" value="${labels.estatus}" />
+									<combobox id="cmbestatus" model="@{estatuss}" selectedItem="@{opcion.estatus}" value="@{opcion.estatus}">
+										<comboitem self="@{each=estatu}" label="@{estatu}" value="@{estatu}"/>
+									</combobox>
+								</row>
+								<row spans="2">
+									<label class="obligatorio" value="${labels.datosObligatorios}" />
+								</row>
+							</rows>
+						</grid>
+                  </tabpanel>
+				</tabpanels>
+			</tabbox>
+		</div>
+		<div align="right" height="20%" style="background:#635fa8">
+			<button id="btnAceptar" label="${labels.aceptar}" image="/images/aceptar.png" orient="vertical">
+				<attribute name="onClick">
+					<![CDATA[
+						try
+						{
+							servicioAdministrarConfiguracion.verificarOpcion(opcion);
+							//servicioAdministrarConfiguracion.guardarTipoDocumento(opcion);
+							//alert("Datos Guardados con Exito");
+							editOpcion.setAttribute("accion","A");
+							editOpcion.detach();
+						}
+						catch (org.sevenlabs.exception.SevenLabsException sle)
+						{
+							alert(sle.getMessage());
+						}
+					]]>
+				</attribute>
+			</button>
+			<button id="btnCancelar" label="${labels.cancelar}" image="/images/remover.png" orient="vertical">
+				<attribute name="onClick">
+					<![CDATA[
+						editOpcion.setAttribute("accion","C");
+						editOpcion.detach();
+					]]>
+				</attribute>
+			</button>
+		</div>
+	</window>
+</zk>

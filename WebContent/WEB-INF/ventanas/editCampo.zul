@@ -1,0 +1,482 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?variable-resolver class="org.zkoss.zkplus.spring.DelegatingVariableResolver"?>
+<?init class="org.zkoss.zkplus.databind.AnnotateDataBinderInit"  arg0="./editCampo" ?>
+
+<zk xmlns:n="http://www.zkoss.org/2005/zk/native"
+	xmlns:h="http://www.w3.org/1999/xhtml">
+
+
+	<zscript src="/WEB-INF/commons/configureContext.zs" />
+	<zscript src="/WEB-INF/commons/configureDialog.zs" />
+
+	<zscript>
+		<![CDATA[
+		     
+			org.modelo.dto.Campo campo = arg.get("objeto");
+			
+			String modo = arg.get("modo");
+			if (modo.equals("N"))
+			{
+				campo.setCantMax(0);
+			}
+			
+			List estatuss= new ArrayList();
+			estatuss.add("Activo");
+			estatuss.add("Inactivo");
+			
+			List tipos= new ArrayList();
+			tipos.add("Caja de Texto");
+			tipos.add("Area de Texto Simple");
+			tipos.add("Area de Texto Ampliada");
+			tipos.add("Opciones Simples");
+			tipos.add("Opciones Multiples");
+			tipos.add("Referencia");
+			tipos.add("Archivo Adjunto");
+			
+			List tiposRefs= new ArrayList();
+			tiposRefs.add("A Documentos");
+			tiposRefs.add("A Usuario");
+			tiposRefs.add("A Glosario de Terminos");
+			
+			List tiposDato= new ArrayList();
+			tiposDato.add("Texto");
+			tiposDato.add("Numerico Enteros");
+			tiposDato.add("Numerico Decimales");
+			
+		]]>						
+	</zscript>
+	<window id="editCampo" title="${labels.campo}" maximizable="false" maximized="false" border="normal" width="650px" height="430px">
+		<caption image="/images/window.png" />
+		<style src="/css/mystyle.css" dynamic="true" />
+		<div height="85%">
+			<textbox visible="false" />
+			<tabbox orient="horizontal">
+				<tabs width="120px">
+					<tab label="${labels.datosGenerales}" />
+					<tab label="${labels.opciones}" visible="false" id="tabOpciones" />
+					<tab label="${labels.referencias}" visible="false" id="tabReferencias" />
+				</tabs>
+				<tabpanels>
+					<tabpanel>
+						<grid>
+							<columns>
+								<column width="20%" align="right" />
+								<column width="80%" />
+							</columns>
+							<rows>
+								<row if="${modo eq 'E'}"> 
+									<label value="${labels.codigo}" />
+									<label value="@{campo.codigo}"/>
+								</row>
+								<row>
+									<label class="obligatorio" value="${labels.nombre}" />
+									<textbox maxlength="60" id="txtnombre" cols="60" value="@{campo.nombre}"/>									
+								</row>
+								<row>
+									<label class="obligatorio" value="${labels.tipo}" />
+									<combobox id="cmbtipo" model="@{tipos}" selectedItem="@{campo.tipo}" value="@{campo.tipo}">
+										<attribute name="onSelect">
+											<![CDATA[
+												ocultarElementos((String)self.getSelectedItem().getValue());
+												
+												/*if (((String)self.getSelectedItem().getValue()).contains("Caja"))
+												{
+													rwTipo.setVisible(true);
+													rwAncho.setVisible(true);
+													rwCantidad.setVisible(true);
+													lblCant.setClass("obligatorio");
+													rwAlto.setVisible(false);
+													tabOpciones.setVisible(false);
+													rwNumRef.setVisible(false);
+													rwNumArch.setVisible(false);
+												}
+												else if (((String)self.getSelectedItem().getValue()).contains("Area"))
+												{
+													rwTipo.setVisible(false);
+													rwAncho.setVisible(true);
+													rwCantidad.setVisible(true);
+													lblCant.setClass(null);
+													rwAlto.setVisible(true);
+													tabOpciones.setVisible(false);
+													rwTipoRef.setVisible(false);
+													rwNumRef.setVisible(false);
+													rwNumArch.setVisible(false);
+												}
+												else if (((String)self.getSelectedItem().getValue()).contains("Opciones"))
+												{
+													rwTipo.setVisible(false);
+													rwAncho.setVisible(false);
+													rwCantidad.setVisible(false);
+													rwAlto.setVisible(false);
+													tabOpciones.setVisible(true);
+													rwTipoRef.setVisible(false);
+													rwNumRef.setVisible(false);
+													rwNumArch.setVisible(false);
+												}
+												else if (((String)self.getSelectedItem().getValue()).contains("Referencia"))
+												{
+													rwTipo.setVisible(false);
+													rwAncho.setVisible(false);
+													rwCantidad.setVisible(false);
+													rwAlto.setVisible(false);
+													tabOpciones.setVisible(false);
+													rwTipoRef.setVisible(true);
+													rwNumRef.setVisible(true);
+													rwNumArch.setVisible(false);
+												}
+												else if (((String)self.getSelectedItem().getValue()).contains("Archivo Adjunto"))
+												{
+													rwTipo.setVisible(false);
+													rwAncho.setVisible(false);
+													rwCantidad.setVisible(false);
+													rwAlto.setVisible(false);
+													tabOpciones.setVisible(false);
+													rwTipoRef.setVisible(false);
+													rwNumRef.setVisible(false);
+													rwNumArch.setVisible(true);
+												}*/
+											]]>
+										</attribute>
+										<comboitem self="@{each=tipot}" label="@{tipot}" value="@{tipot}"/>
+									</combobox>
+								</row>
+								<row id="rwTipo" visible="false">
+									<label class="obligatorio" value="${labels.tipoDato}" />
+									<combobox id="cmbtipodato" model="@{tiposDato}" selectedItem="@{campo.tipoDato}" value="@{campo.tipoDato}">
+										<comboitem self="@{each=tipod}" label="@{tipod}" value="@{tipod}"/>
+									</combobox>
+								</row>
+								<row id="rwTipoRef" visible="false">
+									<label class="obligatorio" value="${labels.tipoDeReferencia}" />
+									<combobox id="cmbtiporef" model="@{tiposRefs}" selectedItem="@{campo.tipoReferencia}" value="@{campo.tipoReferencia}">
+										<attribute name="onSelect">
+											<![CDATA[
+												if (((String)self.getSelectedItem().getValue()).contains("A Documentos"))
+												{
+													tabReferencias.setVisible(true);
+													rwNumRef.setVisible(true);
+												}
+												else if (((String)self.getSelectedItem().getValue()).contains("A Glosario de Terminos"))
+												{
+													tabReferencias.setVisible(false);
+													rwNumRef.setVisible(false);
+												}
+												else
+												{
+													tabReferencias.setVisible(false);
+													rwNumRef.setVisible(true);
+												}
+											]]>
+										</attribute>
+										<comboitem self="@{each=tipor}" label="@{tipor}" value="@{tipor}"/>
+									</combobox>
+								</row>
+								<row id="rwNumRef" visible="false">
+									<label class="obligatorio" value="${labels.numeroDeReferencias}" />
+									<intbox value="@{campo.cantidadReferencia}" cols="5"/>									
+								</row>
+								<row id="rwNumArch" visible="false">
+									<label class="obligatorio" value="${labels.numeroDeArchivos}" />
+									<intbox value="@{campo.cantidadReferencia}" cols="5"/>									
+								</row>
+								<row>
+									<label value="${labels.obligatorio}" />
+									<checkbox value="@{campo.obligatorio}" checked="@{campo.obligatorio}"/>									
+								</row>
+								<row id="rwAncho" visible="false">
+									<label value="${labels.ancho}" />
+									<intbox  cols="5" value="@{campo.longAncho}"/>									
+								</row>
+								<row id="rwAlto" visible="false">
+									<label class="obligatorio" value="${labels.alto}" />
+									<intbox  cols="5" value="@{campo.longAlto}"/>									
+								</row>
+								<row id="rwCantidad" visible="false">
+									<label value="${labels.caracteresMaximo}" id="lblCant"/>
+									<intbox  cols="5" value="@{campo.cantMax}"/>									
+								</row>
+								<row>
+									<label class="obligatorio" value="${labels.estatus}" />
+									<combobox id="cmbestatus" model="@{estatuss}" selectedItem="@{campo.estatus}" value="@{campo.estatus}">
+										<comboitem self="@{each=estatu}" label="@{estatu}" value="@{estatu}"/>
+									</combobox>
+								</row>
+								<row spans="2">
+									<label class="obligatorio" value="${labels.datosObligatorios}" />
+								</row>
+							</rows>
+						</grid>
+                  </tabpanel>					
+                  <tabpanel>
+						<toolbar mold="default" style="background:#635fa8;">
+							<button label="${labels.nueva} ${labels.opcion}" image="/images/settings_add.png"  id="Incluir" >
+								<attribute name="onClick">
+									<![CDATA[
+										org.modelo.dto.Opcion opcion = new org.modelo.dto.Opcion();
+										opcion.setCampo(campo);
+										campo.getOpciones().add(opcion);
+										Map parametros = new HashMap();
+										parametros.put("modo","N");
+										parametros.put("objeto",opcion);
+										Window window = (Window)Executions.createComponents("/WEB-INF/ventanas/editOpcion.zul", null,parametros);
+										window.doModal();
+										if (window.getAttribute("accion").equals("A"))
+										{
+											binder.loadAll();
+										}
+										
+									]]>
+								</attribute>
+							</button>
+							<button label="${labels.borrar} ${labels.todos} ${labels.opciones} ${labels.seleccionadas}" image="/images/settings_delete.png" id="EliminarTodo" >
+								<attribute name="onClick">
+									<![CDATA[
+										if (Messagebox.show("Seguro de Remover Todos Los Elementos Seleccionados?", "Eliminar Todos", Messagebox.OK + Messagebox.CANCEL, Messagebox.INFORMATION) == Messagebox.OK)
+										{
+											for (Listitem li : boxop.getSelectedItems())
+											{
+												org.modelo.dto.Opcion op = li.getValue();
+												try
+												{
+										    		campo.getOpciones().remove(op);
+												}
+												catch(org.sevenlabs.exception.SevenLabsException e)
+												{
+													alert(e.getMessage());
+												}
+											}
+											binder.loadAll();
+										}
+									]]>
+								</attribute>
+							</button>
+						</toolbar>
+						<listbox id="boxop" fixedLayout="true" multiple="true" mold="paging" pageSize="20" width="100%" model="@{campo.opciones}" checkmark="true">
+    						<listhead>
+    							<listheader width="5%" />
+    							<listheader label="${labels.codigo}" align="center" valign="middle" width="15%" />
+								<listheader label="${labels.nombre}" align="center" valign="middle" width="50%" />
+								<listheader label="${labels.estatus}" align="center" valign="middle" width="20%" />
+								<listheader label="Ops." align="center" valign="middle" width="10%" />
+    						</listhead>
+    						<listitem sclass="row-border item" self="@{each=objeto}" value="@{objeto}">
+    							<listcell/>
+								<listcell label="@{objeto.codigo}"/>
+  								<listcell label="@{objeto.nombre}"/>
+  								<listcell label="@{objeto.estatus}"/>
+  								<listcell>
+  									<image tooltiptext="${labels.editar} ${labels.opcion}" src="/images/settings_edit.png" id="Editar" width="18px" height="18px">
+										<attribute name="onClick">
+											<![CDATA[
+												Object objeto = ((Listitem)self.getParent().getParent()).getValue();										
+												Map parametros = new HashMap();
+												parametros.put("modo","E");
+												parametros.put("objeto",objeto);
+												Window window = (Window)Executions.createComponents("/WEB-INF/ventanas/editOpcion.zul", null,parametros);
+												window.doModal();
+												if (window.getAttribute("accion").equals("A"))
+												{
+													binder.loadAll();
+												}	
+											]]>
+										</attribute>
+									</image>
+									<image tooltiptext="${labels.borrar} ${labels.opcion}" src="/images/settings_remove.png" id="Eliminar" width="18px" height="18px">
+										<attribute name="onClick">
+											<![CDATA[	
+												org.modelo.dto.Opcion op = ((Listitem)self.getParent().getParent()).getValue();
+												campo.getOpciones().remove(op);
+												binder.loadAll();
+											]]>
+										</attribute>
+									</image>
+  								</listcell>
+    						</listitem>
+						</listbox>
+                	</tabpanel>
+                	<tabpanel>
+						<toolbar mold="default" style="background:#635fa8;">
+							<button label="${labels.nueva} ${labels.referencia}" image="/images/settings_add.png"  id="IncluirRef" >
+								<attribute name="onClick">
+									<![CDATA[
+										Map parametros = new HashMap();
+										parametros.put("visible","T");
+										Window window = (Window)Executions.createComponents("/WEB-INF/ventanas/catTiposDocumento.zul", null,parametros);
+										window.doModal();
+										if (window.getAttribute("accion").equals("A"))
+										{
+											campo.getTipos().add((org.modelo.dto.TipoDocumento)window.getAttribute("objeto"));
+											binder.loadAll();
+										}
+										
+									]]>
+								</attribute>
+							</button>
+							<button label="${labels.borrar} ${labels.todas} ${labels.referencias} ${labels.seleccionadas}" image="/images/settings_delete.png" id="EliminarTodoRef" >
+								<attribute name="onClick">
+									<![CDATA[
+										if (Messagebox.show("Seguro de Remover Todos Los Elementos Seleccionados?", "Eliminar Todos", Messagebox.OK + Messagebox.CANCEL, Messagebox.INFORMATION) == Messagebox.OK)
+										{
+											for (Listitem li : boxref.getSelectedItems())
+											{
+												org.modelo.dto.TipoDocumento td = li.getValue();
+												try
+												{
+										    		campo.getTipos().remove(td);
+												}
+												catch(org.sevenlabs.exception.SevenLabsException e)
+												{
+													alert(e.getMessage());
+												}
+											}
+											binder.loadAll();
+										}
+									]]>
+								</attribute>
+							</button>
+						</toolbar>
+						<listbox id="boxref" fixedLayout="true" multiple="true" mold="paging" pageSize="20" width="100%" model="@{campo.tipos}" checkmark="true">
+    						<listhead>
+    							<listheader width="5%" />
+    							<listheader label="${labels.codigo}" align="center" valign="middle" width="25%" />
+								<listheader label="${labels.nombre}" align="center" valign="middle" width="60%" />
+								<listheader label="Ops." align="center" valign="middle" width="10%" />
+    						</listhead>
+    						<listitem sclass="row-border item" self="@{each=objeto}" value="@{objeto}">
+    							<listcell/>
+								<listcell label="@{objeto.codigo}"/>
+  								<listcell label="@{objeto.nombre}"/>
+  								<listcell>
+									<image tooltiptext="${labels.borrar} ${labels.referencia}" src="/images/settings_remove.png" id="EliminarRef" width="18px" height="18px">
+										<attribute name="onClick">
+											<![CDATA[	
+												org.modelo.dto.TipoDocumento td = ((Listitem)self.getParent().getParent()).getValue();
+												campo.getTipos().remove(td);
+												binder.loadAll();
+											]]>
+										</attribute>
+									</image>
+  								</listcell>
+    						</listitem>
+						</listbox>
+                	</tabpanel>
+				</tabpanels>
+			</tabbox>
+		</div>
+		<div align="right" height="15%" style="background:#635fa8">
+			<button id="btnAceptar" label="${labels.aceptar}" image="/images/aceptar.png" orient="vertical">
+				<attribute name="onClick">
+					<![CDATA[
+						try
+						{
+							servicioAdministrarConfiguracion.verificarCampo(campo);
+							//servicioAdministrarConfiguracion.guardarTipoDocumento(campo);
+							//alert("Datos Guardados con Exito");
+							editCampo.setAttribute("accion","A");
+							editCampo.detach();
+						}
+						catch (org.sevenlabs.exception.SevenLabsException sle)
+						{
+							alert(sle.getMessage());
+						}
+					]]>
+				</attribute>
+			</button>
+			<button id="btnCancelar" label="${labels.cancelar}" image="/images/remover.png" orient="vertical">
+				<attribute name="onClick">
+					<![CDATA[
+						editCampo.setAttribute("accion","C");
+						editCampo.detach();
+					]]>
+				</attribute>
+			</button>
+		</div>
+		<zscript>
+			<![CDATA[
+				void ocultarElementos(String opcion, String tipoops)
+				{
+					if (opcion.contains("Caja"))
+					{
+						rwTipo.setVisible(true);
+						rwAncho.setVisible(true);
+						rwCantidad.setVisible(true);
+						lblCant.setClass("obligatorio");
+						rwAlto.setVisible(false);
+						tabOpciones.setVisible(false);
+						rwNumRef.setVisible(false);
+						rwNumArch.setVisible(false);
+					}
+					else if (opcion.contains("Area"))
+					{
+						rwTipo.setVisible(false);
+						rwAncho.setVisible(true);
+						rwCantidad.setVisible(true);
+						lblCant.setClass(null);
+						rwAlto.setVisible(true);
+						tabOpciones.setVisible(false);
+						rwTipoRef.setVisible(false);
+						rwNumRef.setVisible(false);
+						rwNumArch.setVisible(false);
+					}
+					else if (opcion.contains("Opciones"))
+					{
+						rwTipo.setVisible(false);
+						rwAncho.setVisible(false);
+						rwCantidad.setVisible(false);
+						rwAlto.setVisible(false);
+						tabOpciones.setVisible(true);
+						rwTipoRef.setVisible(false);
+						rwNumRef.setVisible(false);
+						rwNumArch.setVisible(false);
+					}
+					else if (opcion.contains("Referencia"))
+					{
+						rwTipo.setVisible(false);
+						rwAncho.setVisible(false);
+						rwCantidad.setVisible(false);
+						rwAlto.setVisible(false);
+						tabOpciones.setVisible(false);
+						rwTipoRef.setVisible(true);
+						rwNumRef.setVisible(true);
+						rwNumArch.setVisible(false);
+					}
+					else if (opcion.contains("Archivo Adjunto"))
+					{
+						rwTipo.setVisible(false);
+						rwAncho.setVisible(false);
+						rwCantidad.setVisible(false);
+						rwAlto.setVisible(false);
+						tabOpciones.setVisible(false);
+						rwTipoRef.setVisible(false);
+						rwNumRef.setVisible(false);
+						rwNumArch.setVisible(true);
+					}
+					
+					if (tipoops != null)
+					{
+						if (tipoops.contains("A Documentos"))
+						{
+							tabReferencias.setVisible(true);
+							rwNumRef.setVisible(true);
+						}
+						else if (tipoops.contains("A Glosario de Terminos"))
+						{
+							tabReferencias.setVisible(false);
+							rwNumRef.setVisible(false);
+						}
+						else
+						{
+							tabReferencias.setVisible(false);
+							rwNumRef.setVisible(true);
+						}
+					}
+				}
+				
+				if (modo.equals("E"))
+				{
+					ocultarElementos(campo.getTipo(), campo.getTipoReferencia());
+				}
+			]]>
+		</zscript>
+	</window>
+</zk>

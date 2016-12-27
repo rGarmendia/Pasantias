@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?variable-resolver class="org.zkoss.zkplus.spring.DelegatingVariableResolver"?>
+<?init class="org.zkoss.zkplus.databind.AnnotateDataBinderInit" arg0="./catTerminos"?>
+
+
+<zk xmlns:n="http://www.zkoss.org/2005/zk/native">
+
+	<zscript src="/WEB-INF/commons/configureContext.zs" />
+
+	<zscript>
+<![CDATA[
+	
+	Object entidadCatalogo = null;
+	List terminos = new ArrayList();
+	String seleccion = arg.get("seleccion");
+	
+	Comparator cNombreAsc = new Comparator() {
+		public int compare(org.modelo.dto.Glosario i1, org.modelo.dto.Glosario i2) {
+			if (i1.getNombre() == null || i2.getNombre() == null)
+			{
+				return 0;
+			}
+			else
+			{
+				return i1.getNombre().compareTo(i2.getNombre());
+			}
+		}
+	};
+	Comparator cNombreDes = new Comparator() {
+		public int compare(org.modelo.dto.Glosario i1, org.modelo.dto.Glosario i2) {
+			if (i1.getNombre() == null || i2.getNombre() == null)
+			{
+				return 0;
+			}
+			else
+			{
+				return i1.getNombre().compareTo(i2.getNombre()) * -1;
+			}
+		}
+	};
+]]>
+</zscript>
+
+	<window id="catTerminos" title="${labels.terminoDeGlosario}" maximizable="false" border="normal"
+		width="70%" height="700px">
+		<caption image="/images/window.png" />
+				<div height="90%">
+						
+								<hbox align="center" height="10%">
+									<label value="Busqueda: "></label>
+									<textbox cols="60" id="txtBusqueda"></textbox>
+									<button label="Buscar" image="/images/search.png">
+										<attribute name="onClick">
+											<![CDATA[
+											    if (!txtBusqueda.getValue().trim().equals(""))
+											    {	
+													terminos = servicioAdministrarConfiguracion.buscarTerminosPorNombre(txtBusqueda.getValue().trim());
+													binder.loadAll();
+											    }
+											    else
+											    {
+											    	alert("Debe Insertar un Texto a Buscar");
+											    }
+											]]>
+										</attribute>
+									</button>
+									<button label="Buscar Todos" image="/images/search.png">
+										<attribute name="onClick">
+											<![CDATA[
+												terminos = servicioAdministrarConfiguracion.buscarTodosTerminos();
+												binder.loadAll();
+											]]>
+										</attribute>
+									</button>
+								</hbox>
+								<panel title="" height="90%"
+							border="normal" collapsible="false">
+							<panelchildren>
+								<borderlayout>
+									<center autoscroll="true">
+										<listbox id="lstbox"
+											model="@{terminos}" selectedItem="@{entidadCatalogo}"
+											 mold="paging" pageSize="50" multiple="true"
+														checkmark="true" >
+											<listhead sizable="true">												
+												<listheader
+													width="10%" label=""/>
+												<listheader width="90%" label="Nombre"  sortAscending="${cNombreAsc}" sortDescending="${cNombreDes}" align="center"/>
+											</listhead>
+											<listitem
+												sclass="row-border item" self="@{each=actualCatalogo}" value="@{actualCatalogo}">
+												<listcell />
+												<listcell
+													label="@{actualCatalogo.nombre}" />
+											</listitem>
+										</listbox>
+									</center>
+								</borderlayout>
+							</panelchildren>
+						</panel>
+				</div>
+
+				<div align="right" height="10%" style="background:#635fa8">
+					<button id="btnAceptar" label="Aceptar"
+						image="/images/aceptar.png" orient="vertical">
+						<attribute name="onClick">
+							<![CDATA[
+							         if (seleccion.equals("unica"))
+							         {
+							        	 catTerminos.setAttribute("objeto",lstbox.getSelectedItem().getValue());
+							         }
+							         else
+							         {
+							        	 catTerminos.setAttribute("objeto",lstbox.getSelectedItems());
+							         }
+								
+								catTerminos.setAttribute("accion","A");
+								catTerminos.detach();
+							]]>
+						</attribute>
+					</button>
+					<button id="btnCancelar" label="Cancelar"
+						image="/images/remover.png" orient="vertical">
+						<attribute name="onClick">
+							<![CDATA[
+								catTerminos.setAttribute("accion","C");
+								catTerminos.detach();
+							]]>
+						</attribute>
+					</button>
+				</div>
+		<zscript>
+			<![CDATA[
+
+			]]>
+		 </zscript>
+	</window>
+</zk>

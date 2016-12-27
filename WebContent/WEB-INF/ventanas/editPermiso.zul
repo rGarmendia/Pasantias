@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?variable-resolver class="org.zkoss.zkplus.spring.DelegatingVariableResolver"?>
+<?init class="org.zkoss.zkplus.databind.AnnotateDataBinderInit"  arg0="./editPermiso" ?>
+
+<zk xmlns:n="http://www.zkoss.org/2005/zk/native"
+	xmlns:h="http://www.w3.org/1999/xhtml">
+
+
+	<zscript src="/WEB-INF/commons/configureContext.zs" />
+	<zscript src="/WEB-INF/commons/configureDialog.zs" />
+
+	<zscript>
+	<![CDATA[
+	     
+org.modelo.dto.Permiso permiso = arg.get("objeto");
+String modo = arg.get("modo");
+
+Component principal = Path.getComponent("/targetArea");
+Component padrePrincipal = principal.getParent().getParent().getFellow("menuPrincipal");
+
+List listaMenus = new ArrayList();
+Iterator iter = padrePrincipal.queryAll("menuitem").iterator(); 
+
+while (iter.hasNext())
+{
+	listaMenus.add(iter.next());
+}
+
+List listaVentanas = new ArrayList();
+for(Menuitem mi : listaMenus)
+{
+	if (!mi.getId().contains("Inicio"))
+	{ 
+		String nombre;
+		if (mi.getParent() instanceof Menupopup)
+		{
+			Menu menu = mi.getParent().getParent();
+			nombre = menu.getId() + "/" + mi.getId();
+		}
+		else
+		{
+			nombre = mi.getId();
+		}
+		listaVentanas.add(nombre);
+	}
+}
+
+List operaciones = servicioAdministrarConfiguracion.buscarOperacionesTodas();
+List roles = servicioAdministrarConfiguracion.buscarRolesTodos();
+List listaChecks = new ArrayList();
+		]]>						
+		
+	</zscript>
+
+	<window id="editPermiso" title="${labels.permiso}" maximizable="true"
+		maximized="false" border="normal" width="900px">
+		
+		<style src="/css/mystyle.css" dynamic="true" />
+		<div height="85%" style="overflow: auto;">
+			<tabbox height="100%">
+				<tabs width="120px">
+					<tab label="${labels.datosGenerales}" />
+				</tabs>
+				<tabpanels>
+					<tabpanel style="overflow: auto;"> 
+						<space></space>
+						<space></space>
+						<div align="center">
+							<combobox id="cmbRol" model="@{roles}" cols="40" readonly="true">
+								<attribute name="onSelect">
+									<![CDATA[
+										List listaPermisos = servicioAdministrarConfiguracion.buscarPermisosPorRol(self.getSelectedItem().getValue());
+										//listaChecks = rwPermiso.queryAll("checkbox");
+										Iterator iterC = rwPermiso.queryAll("checkbox").iterator();
+										listaChecks.clear();
+										
+										while (iterC.hasNext())
+										{
+											listaChecks.add(iterC.next());
+										}
+										
+										for(Checkbox chk : listaChecks)
+										{
+											chk.setChecked(false);
+										}
+										
+										for(org.modelo.dto.Permiso permiso : listaPermisos)
+										{
+											for(Checkbox chk : listaChecks)
+											{
+												if (chk.getValue().equals(permiso.getOperacion().getNombre()) &&
+														((Row) chk.getParent()).getValue().equals(permiso.getVentana()))
+												{
+													chk.setChecked(true);
+												}
+											}
+										}
+									]]>
+								</attribute>
+								<comboitem self="@{each=rolS}" label="@{rolS.nombre}" value="@{rolS}"/>
+							</combobox>
+						</div>
+						<space></space>
+						<space></space>
+						<grid preloadSize="100" id="grdPermiso"
+							model="@{listaVentanas}" mold="paging" pageSize="100">
+							<columns sizable="false">
+								<column label="${labels.ventana}"
+									align="center" valign="middle" width="40%"/>
+								<column forEach="${operaciones}" label="${each.nombre}"
+									align="center" valign="middle"/>
+							</columns>
+							<rows id="rwPermiso">
+								<row self="@{each=objetoRow}" value="@{objetoRow}">
+									<label value="@{objetoRow}"></label>
+									<checkbox value="${each.nombre}" forEach="${operaciones}">
+									</checkbox>
+								</row>
+							</rows>
+						</grid>
+                   </tabpanel>
+				</tabpanels>
+			</tabbox>
+		</div>
+		<div align="right" height="15%" style="background:#635fa8;">
+			<button id="btnAceptar" label="${labels.aceptar}"
+				image="/images/aceptar.png" orient="vertical">
+				<attribute name="onClick">
+					<![CDATA[
+						String mensaje = "";
+						
+						if (!mensaje.equals(""))
+						{
+							alert(mensaje);
+						}
+						else
+						{
+							try
+							{	
+								if (cmbRol.getSelectedItem() != null)
+								{
+									//listaChecks = rwPermiso.queryAll("checkbox");
+									Iterator iterC = rwPermiso.queryAll("checkbox").iterator();
+									listaChecks.clear();
+									
+									while (iterC.hasNext())
+									{
+										listaChecks.add(iterC.next());
+									}
+									
+									servicioAdministrarConfiguracion.guardarPermisos(listaChecks, cmbRol.getSelectedItem().getValue());
+									editPermiso.setAttribute("accion","A");
+									editPermiso.detach();
+								}
+								else
+								{
+									alert("You Must Select a Role");
+								}
+							}
+							catch(Exception ex)
+							{
+								alert(ex.getMessage());
+							}
+						}
+					]]>
+				</attribute>
+			</button>
+			<button id="btnCancelar" label="${labels.cancelar}"
+				image="/images/cancelar.png" orient="vertical">
+				<attribute name="onClick">
+					{
+						editPermiso.setAttribute("accion","C");
+						editPermiso.detach();
+					}
+				</attribute>
+			</button>
+		</div>
+		<zscript>
+			<![CDATA[
+				//listaChecks = rwPermiso.queryAll("checkbox");    
+			]]>	
+		</zscript>
+	</window>
+</zk>

@@ -1,0 +1,1448 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?variable-resolver class="org.zkoss.zkplus.spring.DelegatingVariableResolver"?>
+<?init class="org.zkoss.zkplus.databind.AnnotateDataBinderInit"  arg0="./editDocumento" ?>
+
+<zk xmlns:n="http://www.zkoss.org/2005/zk/native"
+	xmlns:h="http://www.w3.org/1999/xhtml">
+
+
+	<zscript src="/WEB-INF/commons/configureContext.zs" />
+	<zscript src="/WEB-INF/commons/configureDialog.zs" />
+
+	<zscript>
+		<![CDATA[
+		     
+			org.modelo.dto.Documento documento = arg.get("objeto");
+			org.modelo.dto.TipoDocumento tipoDocumento = arg.get("tipo");
+			List listaTipos = new ArrayList();
+			
+			documento.setTipoDocumento(tipoDocumento);
+			String modo = arg.get("modo");
+			List listaUsuariosPermiso; 
+			List aprobadores = new ArrayList(documento.aprobadores);
+						
+			if (documento.getUsuarioElaborador() == null)
+			{
+				documento.setUsuarioElaborador(usuario);
+				documento.setUsuarioActual(usuario);
+				documento.setCargoElaborador(((org.modelo.dto.Usuario) usuario).getCargo() == null ? "" : ((org.modelo.dto.Usuario) usuario).getCargo().getTitulo());
+			}
+			
+			boolean desactivo = false;
+			
+			if (documento.getEstatus().equals("Nuevo") || documento.getEstatus().equals("Rechazado"))
+			{
+				if (documento.getEstatus().equals("Rechazado"))
+				{
+					List temp = new ArrayList(documento.getAprobadores());
+					
+					for(org.modelo.dto.DocumentoAprobador da : documento.getAprobadores())
+					{
+						org.modelo.dto.HistorialAprobador ha = new org.modelo.dto.HistorialAprobador();
+						ha.setAprobador(da.getAprobador());
+						ha.setAprobadorid(da.getAprobadorid());
+						ha.setComentario(da.getComentario());
+						ha.setDiasAprobacion(da.getDiasAprobacion());
+						ha.setDocumento(da.getDocumento());
+						ha.setDocumentoid(da.getDocumentoid());
+						ha.setFechaAprobacion(da.getFechaAprobacion());
+						ha.setFechaRecepcion(da.getFechaRecepcion());
+						ha.setOrden(da.getOrden());
+						ha.setResultado(da.getResultado());
+						
+						documento.getHistoricoAprobadores().add(ha);
+					}
+					documento.getAprobadores().clear();
+					
+					for (org.modelo.dto.DocumentoAprobador da : temp)
+					{
+						da.setComentario(null);
+						da.setFechaAprobacion(null);
+						da.setFechaRecepcion(null);
+						da.setResultado(null);
+						documento.getAprobadores().add((org.modelo.dto.DocumentoAprobador)da.clone());	
+					}
+				}
+				else if (documento.getIdCodigo() == null)
+				{
+					org.modelo.dto.HistorialDocumento hdoc = new org.modelo.dto.HistorialDocumento();
+					hdoc.setDocumento(documento);
+					hdoc.setFecha(java.util.Calendar.getInstance().getTime());
+					hdoc.setOcurrencia("Se Creo el Documento");
+					hdoc.setUsuario(usuario);
+					documento.getOcurrencias().add(hdoc);
+				}
+				
+				if (documento.getAprobadores().size() == 0)
+				{
+					org.modelo.dto.RutaAprobacionSeguridad ras = servicioAdministrarConfiguracion.buscarAprobadoresPorTipoArea(documento.getTipoDocumento(), documento.getArea(), documento.getArea());
+					if (ras != null)
+					{
+						for(org.modelo.dto.RutaAprobacionAprobador raa : ras.getAprobadores())
+						{
+							org.modelo.dto.DocumentoAprobador da = new org.modelo.dto.DocumentoAprobador();
+							da.setAprobador(raa.getAprobador());
+							da.setAprobadorid(raa.getAprobadorid());
+							da.setDocumento(documento);
+							da.setOrden(raa.getOrden());
+							da.setDiasAprobacion(raa.getDiasAprobacion());
+							documento.getAprobadores().add(da);
+						}
+					}
+					
+				}
+				desactivo = false;
+			}
+			else
+			{
+				desactivo = true;
+			}
+			
+			void crear(Label lbl, Object hdoc)
+			{
+				try
+				{
+					if (hdoc instanceof org.modelo.dto.HistorialDocumento)
+					{
+						String newstring = new java.text.SimpleDateFormat("dd/MM/yyyy hh:MM:ss").format(hdoc.getFecha());
+						lbl.setValue(newstring + " / " + hdoc.getUsuario().getNombres() + " "  + hdoc.getUsuario().getApellidos());
+					}
+					else if (hdoc instanceof org.modelo.dto.HistorialAprobador)
+					{
+						if (hdoc.getFechaAprobacion() != null)
+						{
+							String newstring = new java.text.SimpleDateFormat("dd/MM/yyyy hh:MM:ss").format(hdoc.getFechaAprobacion());
+							lbl.setValue(newstring + " / " + hdoc.getAprobador() .getNombres() + " "  + hdoc.getAprobador().getApellidos());
+						}
+					}
+				}
+				catch(Exception ex)
+				{
+					alert(ex.getMessage());
+				}
+			}
+		]]>						
+	</zscript>
+	<window id="editDocumento" title="${tipoDocumento.nombre} - ${documento.titulo} (${documento.codigo})" maximizable="false" maximized="false" border="normal" width="95%" height="95%">
+		<caption image="/images/window.png" />
+		<style src="/css/mystyle.css" dynamic="true" />
+		<div height="90%" style="overflow:auto">
+			<textbox visible="false" />
+			<borderlayout>
+				<west title="Razon de Rechazo" size="17%" splittable="true" collapsible="true" if="${objetoP.estatus eq 'Rechazado'}">
+					<div style="background:#B8D335">
+						<textbox value="${comenRechazo}"
+							style="color:white;font-size:25px" disabled="true" cols="10" rows="10"/>
+					</div>
+				</west>
+				<center border="none" >
+					<tabbox orient="horizontal">
+						<tabs width="120px">
+							<tab label="${labels.informacion}" />
+							<tab label="${labels.datosGenerales}" />
+							<tab label="${labels.aprobadores}" />
+							<tab label="Historial de Ocurrencias" />
+							<tab label="Historial de Aprobacion" />
+						</tabs>
+						<tabpanels>
+							<tabpanel>
+								<grid>
+									<columns>
+										<column width="20%" align="right" />
+										<column width="80%" />
+									</columns>
+									<rows>
+										<row if="${(tipoDocumento.patronCodigo eq null) or (tipoDocumento.patronCodigo eq '' )}"> 
+											<label class="obligatorio" value="${labels.codigo}" />
+											<textbox maxlength="10" cols="10" value="@{documento.codigo}" if="${documento.estatus eq 'Nuevo'}" disabled="${desactivo}"/>
+											<label value="@{documento.codigo}" if="${documento.estatus ne 'Nuevo'}"/>
+										</row>
+										<row>
+											<label class="obligatorio" value="${labels.titulo}" />
+											<textbox maxlength="100" cols="100" value="@{documento.titulo}" disabled="${desactivo}"/>
+										</row>
+										<row if="${tipoDocumento.tipoPadre != null}">
+											<label class="obligatorio" value="${tipoDocumento.tipoPadre.nombre}" />
+											<hbox align="center">
+												<label id="lblDocPadre" style="font-weight: bold;">
+													<attribute name="onCreate">
+														<![CDATA[
+														    if (documento.getPadre() != null)
+														    {
+																self.setValue(documento.getPadre().getTitulo() + " (" + documento.getPadre().getCodigo() + ")");
+														    }
+														]]>
+													</attribute>
+												</label>
+												<button label="${labels.buscar}" image="/images/find.png" disabled="${desactivo}" >
+													<attribute name="onClick">
+														<![CDATA[
+															Map parametros = new HashMap();
+															List lista = new ArrayList();
+															lista.add(documento.getTipoDocumento().getTipoPadre());
+															
+															parametros.put("tipos", lista);
+															parametros.put("estado", "Vigente");
+															parametros.put("seleccion", "unica");
+															
+															Window window = (Window)Executions.createComponents("/WEB-INF/ventanas/catDocumentos.zul", null,parametros);
+															window.doModal();
+															if (window.getAttribute("accion").equals("A"))
+															{
+																org.modelo.dto.Documento docp = window.getAttribute("objeto");
+																documento.setPadre(docp);
+																lblDocPadre.setValue(docp.getTitulo() + " (" + docp.getCodigo() + ")");
+																
+																org.modelo.dto.Area ar = docp.getArea();
+																documento.setArea(ar);
+																documento.setSubArea(docp.getSubArea());
+																
+																if (ar.getSubAreas().size() > 0)
+																{
+		
+																	org.modelo.dto.RutaAprobacionSeguridad ras = servicioAdministrarConfiguracion.buscarAprobadoresPorTipoArea(documento.getTipoDocumento(), documento.getArea(), documento.getSubArea());
+																	if (ras != null)
+																	{
+																		for(org.modelo.dto.RutaAprobacionAprobador raa : ras.getAprobadores())
+																		{
+																			org.modelo.dto.DocumentoAprobador da = new org.modelo.dto.DocumentoAprobador();
+																			da.setAprobador(raa.getAprobador());
+																			da.setAprobadorid(raa.getAprobadorid());
+																			da.setDocumento(documento);
+																			da.setOrden(raa.getOrden());
+																			da.setDiasAprobacion(raa.getDiasAprobacion());
+																			documento.getAprobadores().add(da);
+																		}
+																	}
+																}
+																else
+																{
+																	org.modelo.dto.RutaAprobacionSeguridad ras = servicioAdministrarConfiguracion.buscarAprobadoresPorTipoArea(documento.getTipoDocumento(), documento.getArea(), documento.getArea());
+																	if (ras != null)
+																	{
+																		for(org.modelo.dto.RutaAprobacionAprobador raa : ras.getAprobadores())
+																		{
+																			org.modelo.dto.DocumentoAprobador da = new org.modelo.dto.DocumentoAprobador();
+																			da.setAprobador(raa.getAprobador());
+																			da.setAprobadorid(raa.getAprobadorid());
+																			da.setDocumento(documento);
+																			da.setOrden(raa.getOrden());
+																			da.setDiasAprobacion(raa.getDiasAprobacion());
+																			documento.getAprobadores().add(da);
+																		}
+																	}
+																}
+																binder.loadAll();
+															}
+														]]>
+													</attribute>
+												</button>
+											</hbox>
+										</row>
+										<row if="${tipoDocumento.tipoPadre == null}">
+											<label class="obligatorio" value="Area" />
+											<hbox align="center">
+												<label id="lblArea" style="font-weight: bold;"  value="@{documento.area.nombre}"/>
+												<button label="${labels.buscar}" image="/images/find.png" disabled="${desactivo}">
+													<attribute name="onClick">
+														<![CDATA[
+															Map parametros = new HashMap();
+															parametros.put("modo","A");
+															Window window = (Window)Executions.createComponents("/WEB-INF/ventanas/catAreas.zul", null,parametros);
+															window.doModal();
+															if (window.getAttribute("accion").equals("A"))
+															{
+																org.modelo.dto.Area ar = window.getAttribute("objeto");
+																documento.setArea(ar);
+																lblArea.setValue(ar.getNombre());
+																lblSubArea.setValue("");
+																
+																if (ar.getSubAreas().size() > 0)
+																{
+		
+																	documento.getAprobadores().clear();
+																	documento.setSubArea(null);
+																	rowSubArea.setVisible(true);
+																}
+																else
+																{
+																	org.modelo.dto.RutaAprobacionSeguridad ras = servicioAdministrarConfiguracion.buscarAprobadoresPorTipoArea(documento.getTipoDocumento(), documento.getArea(), documento.getArea());
+																	if (ras != null)
+																	{
+																		for(org.modelo.dto.RutaAprobacionAprobador raa : ras.getAprobadores())
+																		{
+																			org.modelo.dto.DocumentoAprobador da = new org.modelo.dto.DocumentoAprobador();
+																			da.setAprobador(raa.getAprobador());
+																			da.setAprobadorid(raa.getAprobadorid());
+																			da.setDocumento(documento);
+																			da.setOrden(raa.getOrden());
+																			da.setDiasAprobacion(raa.getDiasAprobacion());
+																			documento.getAprobadores().add(da);
+																		}
+																	}
+																	documento.setSubArea(ar);
+																	rowSubArea.setVisible(false);
+																}
+																binder.loadAll();
+															}
+														]]>
+													</attribute>
+												</button>
+											</hbox>									
+										</row>
+										<row id="rowSubArea" visible="false">
+											<label class="obligatorio" value="Sub Area" />
+											<hbox>
+												<label id="lblSubArea" style="font-weight: bold;" value="@{documento.subArea.nombre}"/>
+												<button label="${labels.buscar}" image="/images/find.png" disabled="${desactivo}">
+													<attribute name="onClick">
+														<![CDATA[
+															Map parametros = new HashMap();
+															parametros.put("modo","S");
+															Window window = (Window)Executions.createComponents("/WEB-INF/ventanas/catAreas.zul", null,parametros);
+															window.doModal();
+															if (window.getAttribute("accion").equals("A"))
+															{
+																org.modelo.dto.Area sar = window.getAttribute("objeto");
+																documento.setSubArea(sar);
+																lblSubArea.setValue(sar.getNombre());
+																
+																org.modelo.dto.RutaAprobacionSeguridad ras = servicioAdministrarConfiguracion.buscarAprobadoresPorTipoArea(documento.getTipoDocumento(), documento.getArea(), documento.getSubArea());
+																if (ras != null)
+																{
+																	for(org.modelo.dto.RutaAprobacionAprobador raa : ras.getAprobadores())
+																	{
+																		org.modelo.dto.DocumentoAprobador da = new org.modelo.dto.DocumentoAprobador();
+																		da.setAprobador(raa.getAprobador());
+																		da.setAprobadorid(raa.getAprobadorid());
+																		da.setDocumento(documento);
+																		da.setOrden(raa.getOrden());
+																		da.setDiasAprobacion(raa.getDiasAprobacion());
+																		documento.getAprobadores().add(da);
+																	}
+																}
+																binder.loadAll();
+															}
+														]]>
+													</attribute>
+												</button>
+											</hbox>									
+										</row>
+										<row>
+											<label value="${labels.elaboradoPor}" />
+											<label value="${documento.usuarioElaborador.nombres} ${documento.usuarioElaborador.apellidos}"/>									
+										</row>
+										<row>
+											<label value="${labels.cargo}" />
+											<label value="${documento.cargoElaborador}"/>									
+										</row>
+										<row>
+											<label value="${labels.fechaDeElaboracion}" />
+											<label value="${documento.fechaElaboracion}"/>									
+										</row>
+										<row spans="2">
+											<label class="obligatorio" value="${labels.datosObligatorios}" />
+										</row>
+									</rows>
+								</grid>
+		                  </tabpanel>
+		                  <tabpanel style="overflow:auto">
+								<grid id="grdInfo" height="500px">
+									<attribute name="onCreate">
+										<![CDATA[
+										         
+										    Rows rws = self.getRows();
+										    tipoDocumento.ordenarCamposDesc();
+										    
+											for (org.modelo.dto.Campo cmp : tipoDocumento.getCampos())
+											{
+												org.modelo.dto.Valor valEnc = null;
+												if (modo.equals("E") || modo.equals("C"))
+												{
+													for (org.modelo.dto.Valor val : documento.getValores())
+													{
+														if (val.getCampo().equals(cmp))
+														{
+															valEnc = val;
+															break;
+														}
+													}
+												}
+												
+												if (cmp.getEstatus().equals("Activo"))
+												{
+													Row rw = new Row();
+													Label lblCampo = new Label(cmp.getNombre());
+													if (cmp.isObligatorio())
+													{
+														lblCampo.setClass("obligatorio");
+													}
+													lblCampo.setParent(rw);
+													
+													Component comp;
+													if (cmp.getTipo().equals("Caja de Texto"))
+													{	
+														if (desactivo)
+														{
+															comp = new Label(valEnc.getValor());	
+														}
+														else
+														{
+															if(cmp.getTipoDato().equals("Texto"))
+															{
+																comp = new Textbox();
+																if (valEnc != null)
+																{
+																	((Textbox) comp).setValue(valEnc.getValor());
+																}
+															}
+															else if(cmp.getTipoDato().equals("Numerico Enteros"))
+															{
+																comp = new Intbox();
+																if (valEnc != null)
+																{
+																	((Intbox) comp).setValue(new Integer(valEnc.getValor()));
+																}
+															}
+															else if(cmp.getTipoDato().equals("Numerico Decimales"))
+															{
+																comp = new Doublebox();
+																if (valEnc != null)
+																{
+																	((Doublebox) comp).setValue(new Double(valEnc.getValor()));
+																}
+															}
+															
+															if (cmp.getLongAncho() == null)
+															{
+																((org.zkoss.zul.impl.InputElement)comp).setWidth("100%");
+															}
+															else
+															{
+																((org.zkoss.zul.impl.InputElement)comp).setCols(cmp.getLongAncho());
+															}
+															((org.zkoss.zul.impl.InputElement)comp).setMaxlength(cmp.getCantMax());
+														}
+													}
+													else if (cmp.getTipo().contains("Area de Texto Simple"))
+													{	
+														comp = new Textbox();
+														
+														if (cmp.getLongAncho() == null)
+														{
+															((Textbox)comp).setWidth("100%");
+														}
+														else
+														{
+															((Textbox)comp).setCols(cmp.getLongAncho());
+														}
+														
+														if (cmp.getCantMax() != null)
+														{
+															((Textbox)comp).setMaxlength(cmp.getCantMax());
+														}
+														((Textbox)comp).setRows(cmp.getLongAlto());
+														if (valEnc != null)
+														{
+															((Textbox) comp).setValue(valEnc.getValor());
+														}
+														((Textbox)comp).setDisabled(desactivo);
+													}
+													else if (cmp.getTipo().contains("Area de Texto Ampliada"))
+													{	
+														if (documento.getEstatus().equals("Nuevo") || documento.getEstatus().equals("Rechazado"))
+														{	
+															comp = new org.zkforge.ckez.CKeditor();
+															((org.zkforge.ckez.CKeditor)comp).setWidth("100%");
+															((org.zkforge.ckez.CKeditor)comp).setHeight(cmp.getLongAlto().toString());
+															((org.zkforge.ckez.CKeditor)comp).setFilebrowserImageBrowseUrl("/widget/img");
+															((org.zkforge.ckez.CKeditor)comp).setFilebrowserImageUploadUrl("/widget/img");
+															((org.zkforge.ckez.CKeditor)comp).setCustomConfigurationsPath("/js/config.js");
+															if (valEnc != null)
+															{
+																((org.zkforge.ckez.CKeditor) comp).setValue(valEnc.getValor());
+															}
+														} 
+														else if (documento.getEstatus().equals("En Revision") || documento.getEstatus().equals("Aprobado") || documento.getEstatus().equals("Vigente"))
+														{
+															comp = new Html();
+															((Html)comp).setContent(valEnc.getValor());
+														}
+														else
+														{
+															comp = new Html();
+															((Html)comp).setContent(valEnc.getValor());
+														}
+													}
+													else if (cmp.getTipo().contains("Opciones Simples"))
+													{	
+														comp = new Radiogroup();
+														for(org.modelo.dto.Opcion ops : cmp.getOpciones())
+														{
+															Radio rd = new Radio();
+															if (ops.getEstatus().equals("Activo"))
+															{
+																rd.setLabel(ops.getNombre());	
+																rd.setValue(ops.getNombre());
+																
+																if (valEnc != null)
+																{
+																	if (ops.getNombre().equals(valEnc.getValor()))
+																	{
+																		rd.setChecked(true);
+																	}
+																}
+															}
+															rd.setId(cmp.getCodigo().toString() + "-" + ops.getCodigo().toString());
+															rd.setParent(comp);
+														}
+														
+													}
+													else if (cmp.getTipo().contains("Opciones Multiples"))
+													{	
+														comp = new Hbox();
+														for(org.modelo.dto.Opcion ops : cmp.getOpciones())
+														{
+															Checkbox chk = new Checkbox();
+															if (ops.getEstatus().equals("Activo"))
+															{
+																chk.setLabel(ops.getNombre());	
+																chk.setValue(ops.getNombre());
+																
+																if (valEnc != null)
+																{
+																	for (org.modelo.dto.ValorOpcion valo : valEnc.getValoresOpciones())
+																	{
+																		if (valo.getValorResul().equals(ops.getNombre()))
+																		{
+																			chk.setChecked(true);
+																		}
+																	}
+																}
+															}
+															chk.setId(cmp.getCodigo().toString() + "-" + ops.getCodigo().toString());
+															chk.setParent(comp);
+														}
+														
+													}
+													else if (cmp.getTipo().contains("Referencia"))
+													{
+														comp = new Hbox();
+														Button btnRef = null;
+														Label lblRef = null;
+														if (cmp.getCantidadReferencia().equals(new Integer(1)))
+														{
+															lblRef = new Label();
+															lblRef.setParent(comp);
+															btnRef = new Button("Buscar");
+															btnRef.setParent(comp);
+														}
+															
+														if (cmp.getTipoReferencia().equals("A Documentos"))
+														{ 
+															if (btnRef != null)
+															{
+																rw.setValue(cmp);
+																btnRef.addEventListener("onClick",
+																	new org.zkoss.zk.ui.event.EventListener() {
+																		public void onEvent(Event event) {
+																			Map parametros = new HashMap();
+																			
+																			org.modelo.dto.Campo cmpo = ((Row)event.getTarget().getParent().getParent()).getValue();
+																			parametros.put("tipos",new ArrayList(cmpo.getTipos()));
+																			parametros.put("estado","Vigente");
+																			parametros.put("seleccion","unica");
+																			Window window = (Window)Executions.createComponents("/WEB-INF/ventanas/catDocumentos.zul", null,parametros);
+																			window.doModal();
+																			if (window.getAttribute("accion").equals("A"))
+																			{
+																				lblRef.setValue("(" + ((org.modelo.dto.Documento)window.getAttribute("objeto")).getCodigo() + ") " + ((org.modelo.dto.Documento)window.getAttribute("objeto")).getTitulo());
+																				documento.getReferenciasDocumentos().clear();
+																				documento.getReferenciasDocumentos().add(window.getAttribute("objeto"));
+																			}
+																		}
+																	});
+															}
+															else
+															{
+																listaTipos = new ArrayList(cmp.getTipos());
+																
+																comp = hbxRefDocs.clone();
+																Component cmpAux = comp.getFellow("IncluirRef");
+																cmpAux.setId(cmpAux.getId() + "-" + cmp.getCodigo().toString());
+																
+																cmpAux = comp.getFellow("EliminarTodoRef");
+																cmpAux.setId(cmpAux.getId() + "-" + cmp.getCodigo().toString());
+																
+																cmpAux = comp.getFellow("boxref");
+																cmpAux.setId(cmpAux.getId() + "-" + cmp.getCodigo().toString());
+																
+																comp.setVisible(true);
+															}
+														}
+														else if (cmp.getTipoReferencia().equals("A Usuario"))
+														{
+															if (btnRef != null)
+															{
+																btnRef.addEventListener("onClick",
+																	new org.zkoss.zk.ui.event.EventListener() {
+																		public void onEvent(Event event) {
+																			Map parametros = new HashMap();
+																			parametros.put("seleccion","unica");
+																			Window window = (Window)Executions.createComponents("/WEB-INF/ventanas/catUsuarios.zul", null,parametros);
+																			window.doModal();
+																			if (window.getAttribute("accion").equals("A"))
+																			{
+																				String cargo = ((org.modelo.dto.Usuario)window.getAttribute("objeto")).getCargo() != null ? 
+																						" (" + ((org.modelo.dto.Usuario)window.getAttribute("objeto")).getCargo().getTitulo() + ")"
+																						: "";
+																						
+																				lblRef.setValue(((org.modelo.dto.Usuario)window.getAttribute("objeto")).getNombres() + " " + ((org.modelo.dto.Usuario)window.getAttribute("objeto")).getApellidos() + cargo);
+																				
+																				documento.getReferenciasUsuarios().clear();
+																				documento.getReferenciasUsuarios().add(window.getAttribute("objeto"));
+																			}
+																		}
+																	});
+															}
+															else
+															{	
+																comp = hbxRefUsus;
+																comp.setVisible(true);
+															}
+														}
+														else if (cmp.getTipoReferencia().equals("A Glosario de Terminos"))
+														{
+															if (btnRef != null)
+															{
+																btnRef.addEventListener("onClick",
+																	new org.zkoss.zk.ui.event.EventListener() {
+																		public void onEvent(Event event) {
+																			Map parametros = new HashMap();
+																			parametros.put("seleccion","unica");
+																			Window window = (Window)Executions.createComponents("/WEB-INF/ventanas/catTerminos.zul", null,parametros);
+																			window.doModal();
+																			if (window.getAttribute("accion").equals("A"))
+																			{
+																				lblRef.setValue(((org.modelo.dto.Glosario)window.getAttribute("objeto")).getNombre());
+																				
+																				documento.getReferenciasTerminos().clear();
+																				documento.getReferenciasTerminos().add(window.getAttribute("objeto"));
+																			}
+																		}
+																	});
+															}
+															else
+															{	
+																comp = hbxRefTerms;
+																comp.setVisible(true);
+															}
+														}
+													}
+													else if (cmp.getTipo().contains("Archivo Adjunto"))
+													{
+														comp = new Hbox();
+														
+														Toolbarbutton uploadButton = new Toolbarbutton("Attach",
+																"/images/document_attach_01.png");
+														uploadButton.setUpload("true");
+														uploadButton.addEventListener("onUpload",
+																new org.zkoss.zk.ui.event.EventListener() {
+
+																	public void onEvent(Event arg0) throws Exception {
+																		org.zkoss.util.media.Media media = event.getMedia();
+																        Hlayout hl = new Hlayout();
+																        hl.setSpacing("6px");
+																        hl.appendChild(new Label(media.getName()));
+																        A rm = new A("Remover");
+																        rm.addEventListener(Events.ON_CLICK,new org.zkoss.zk.ui.event.EventListener(){
+																            public void onEvent(Event event) throws Exception {
+																                hl.detach();
+																            }
+																        });
+																        hl.appendChild(rm);
+																        
+																        rm = new A("Abrir");
+																        rm.addEventListener(Events.ON_CLICK,new org.zkoss.zk.ui.event.EventListener(){
+																            public void onEvent(Event event) throws Exception {
+																                //hl.detach();
+																            }
+																        });
+																        hl.appendChild(rm);
+																        flist.appendChild(hl);
+																	}
+																});
+																												
+														uploadButton.setParent(comp);
+														
+														Vlayout vlayout = new Vlayout();
+														vlayout.setId("flist");
+														vlayout.setParent(comp);
+													}
+													
+													comp.setId(cmp.getCodigo().toString());
+													comp.setParent(rw);
+													rw.setStyle("padding : 5px");
+													rws.insertBefore(rw, rws.getFirstChild());
+												}
+											}
+										]]>
+									</attribute>
+									<columns>
+										<column width="10%" align="right" />
+										<column width="90%" />
+									</columns>
+									<rows>
+										<row spans="2">
+											<label class="obligatorio" value="${labels.datosObligatorios}" />
+										</row>
+									</rows>
+								</grid>
+							</tabpanel>
+		                  <tabpanel style="overflow:auto">
+		                  		<toolbar>
+									<hbox align="center" style="background:#FFFFFF;">
+														<button label="${labels.agregar} ${labels.aprobadores}" image="/images/incluir.png"  id="Incluir" disabled="${desactivo}">
+															<attribute name="onClick">
+																<![CDATA[
+																	Map parametros = new HashMap();
+																	parametros.put("modo","M");
+																	parametros.put("seleccion","varios");
+																	Window window = (Window)Executions.createComponents("/WEB-INF/ventanas/catUsuarios.zul", null,parametros);
+																	window.doModal();
+																	if (window.getAttribute("accion").equals("A"))
+																	{
+																		Set items = window.getAttribute("objeto");
+																		for(Listitem li : items)
+																		{
+																			boolean encontro = false;
+																			for(org.modelo.dto.DocumentoAprobador dca : documento.getAprobadores())
+																			{
+																				if (dca.getAprobadorid().equals(((org.modelo.dto.Usuario) li.getValue()).getLogin()))
+																				{
+																					encontro = true;
+																					break;
+																				}
+																			}
+																			
+																			if (!encontro)
+																			{
+																				//org.modelo.dto.RutaAprobacionAprobadorPK raapk = new org.modelo.dto.RutaAprobacionAprobadorPK();
+																				//raapk.setAprobadorid( ((org.modelo.dto.Usuario) li.getValue()).getLogin());
+																				org.modelo.dto.DocumentoAprobador dca = new org.modelo.dto.DocumentoAprobador();
+																				dca.setAprobador(li.getValue());
+																				dca.setAprobadorid(((org.modelo.dto.Usuario) li.getValue()).getLogin());
+																				dca.setDiasAprobacion(ibxDias.getValue());
+																				dca.setOrden(documento.getAprobadores().size() + 1);
+																				dca.setDocumento(documento);
+																				
+																				documento.getAprobadores().add(dca);
+																			}
+																		}
+																		aprobadores = new ArrayList(documento.aprobadores);
+																		binder.loadAll();
+																	}
+																	
+																]]>
+															</attribute>
+														</button>
+														<button label="${labels.remover} ${labels.todos} ${labels.aprobadores} ${labels.seleccionados}" image="/images/borrar.png" id="EliminarTodo"  disabled="${desactivo}">
+															<attribute name="onClick">
+																<![CDATA[	
+																]]>
+															</attribute>
+														</button>
+														<separator></separator>
+														<label value="${labels.diasParaAprobar}"></label>
+														<intbox id="ibxDias" cols="3" value="5"  disabled="${desactivo}"></intbox>
+													</hbox>
+												</toolbar>
+												<listbox fixedLayout="true" multiple="true" mold="paging" pageSize="20" width="100%" model="@{documento.aprobadores}" checkmark="true">
+						    						<listhead>
+						    							<listheader width="3%" />
+						    							<listheader label="${labels.nombres}" align="center" valign="middle" width="25%" />
+														<listheader label="${labels.apellidos}" align="center" valign="middle" width="25%" />
+														<listheader label="${labels.cargo}" align="center" valign="middle" width="20%" />
+														<listheader label="${labels.diasParaAprobar}" align="center" valign="middle" width="17%" />
+														<listheader label="Ops." align="center" valign="middle" width="10%" />
+						    						</listhead>
+						    						<listitem sclass="row-border item" self="@{each=objetoli}" value="@{objetoli}"  disabled="${desactivo}">
+						    							<attribute name="onCreate">
+															<![CDATA[
+																self.setSelected(false);
+															]]>
+														</attribute>
+						    							<listcell/>
+														<listcell label="@{objetoli.aprobador.nombres}"/>
+						  								<listcell label="@{objetoli.aprobador.apellidos}"/>
+						  								<listcell label=""/>
+						  								<listcell>
+						  									<intbox cols="3" value="@{objetoli.diasAprobacion}"></intbox>
+						  								</listcell>
+						  								<listcell>
+						  									<attribute name="onClick">
+																<![CDATA[
+																	((Listitem)self.getParent()).setSelected(false);
+																]]>
+															</attribute>
+															<image tooltiptext="${labels.remover} ${labels.usuario}" src="/images/borrar.png" id="Eliminar" width="18px" height="18px">
+																<attribute name="onClick">
+																	<![CDATA[
+																		org.modelo.dto.DocumentoAprobador doca = ((Listitem)self.getParent().getParent()).getValue();
+																		documento.getAprobadores().remove(doca);
+																		binder.loadAll();
+																	]]>
+																</attribute>
+															</image>
+															<image tooltiptext="Bajar" src="/images/downarrow_g.png"  width="18px" height="18px" >
+																<attribute name="onClick">
+																	<![CDATA[
+																	    if (!desactivo)
+																	    {
+																			org.modelo.dto.DocumentoAprobador dca = ((Listitem)self.getParent().getParent()).getValue();
+																			if (dca.getOrden() < dca.getRutaAprobacion().getAprobadores().size())
+																			{
+																				List apps = new ArrayList(dca.getDocumento().getAprobadores());
+																				boolean encontro = false;
+																				for(int i = 0; i < apps.size(); i++)
+																				{
+																					org.modelo.dto.RutaAprobacionAprobador dc = apps.get(i);
+																					if (dca.equals(dc))
+																					{
+																						org.modelo.dto.RutaAprobacionAprobador dcaDes = apps.get(i+1);
+																						dcaDes.setOrden(dcaDes.getOrden() - 1);
+																						dc.setOrden(dc.getOrden() + 1);
+																						dca.getDocumento().ordenarAprobadores();
+																						binder.loadAll();
+																						break;
+																					}
+																				}
+																			}
+																	    }
+																	]]>
+																</attribute>
+															</image>
+															<image tooltiptext="Subir" src="/images/uparrow_g.png"  width="18px" height="18px">
+																<attribute name="onClick">
+																	<![CDATA[
+																	    if (!desactivo)
+																	    {
+																			org.modelo.dto.DocumentoAprobador dca = ((Listitem)self.getParent().getParent()).getValue();
+																			if (dca.getOrden() > 1)
+																			{
+																				List listaApps = new ArrayList(dca.getDocumento().getAprobadores());
+																				boolean encontro = false;
+																				for(int i = 0; i < listaApps.size(); i++)
+																				{
+																					org.modelo.dto.DocumentoAprobador dc = listaApps.get(i);
+																					if (dca.equals(dc))
+																					{
+																						org.modelo.dto.DocumentoAprobador dcaAnt = listaApps.get(i-1);
+																						dcaAnt.setOrden(dcaAnt.getOrden() + 1);
+																						dc.setOrden(dc.getOrden() - 1);
+																						dca.getRutaAprobacion().ordenarAprobadores();
+																						binder.loadAll();
+																						break;
+																					}
+																				}
+																			}
+																	    }
+																	]]>
+																</attribute>
+															</image>
+						  								</listcell>
+						    						</listitem>
+												</listbox>
+		                	</tabpanel>
+		                	<tabpanel height="100%">
+										<div
+											style="background-color:#D4E9F6;padding:15px;overflow:hidden;">
+											<zscript>
+											    </zscript>
+											<grid fixedLayout="true" width="100%" height="100%">
+												<columns>									
+													<column />
+													<column width="98%" />
+												</columns>
+												<rows>
+													<row
+														forEach="${documento.ocurrencias}">
+														<label value=""/>
+														<h:table border="0" width="100%">
+															<h:tr>
+																<h:td>															
+																	<label
+																		 onCreate='crear(self, self.getAttribute("valor"))'>
+																		 <custom-attributes valor="${each}"/>
+																	</label>
+																</h:td>
+															</h:tr>
+															<h:tr>
+																<h:td>															
+																	<label
+																		value="${each.ocurrencia}" />
+																</h:td>
+															</h:tr>
+															<h:tr if="${!(each.comentario eq null)}">
+																<h:td >
+																	<div
+																style="margin:10px; background-color:#E1E1E1;padding:15px;overflow:hidden;" >
+																<h:table border="0" width="100%">
+																	<h:tr>
+																		<h:td>
+																			<div>
+																				<label
+																					value="Motivo: ${each.comentario}" />
+																			</div>
+																		</h:td>
+																	</h:tr>
+																</h:table>
+																<h:hr
+																	style="color:#EFF0F0" />
+															</div>
+																</h:td>
+															</h:tr>
+														</h:table>
+													</row>
+												</rows>
+											</grid>
+										
+										</div>
+							</tabpanel>
+		                	<tabpanel style="overflow:auto" height="100%">
+										<div
+											style="background-color:#D4E9F6;padding:15px;overflow:hidden;">
+											<zscript>
+											    </zscript>
+											<grid fixedLayout="true" width="100%" height="100%">
+												<columns>									
+													<column />
+													<column width="98%" />
+												</columns>
+												<rows>
+													<row
+														forEach="${documento.historicoAprobadores}">
+														<label value=""/>
+														<h:table border="0" width="100%" if="${!(each.comentario eq null)}">
+															<h:tr>
+																<h:td>															
+																	<label onCreate='crear(self, self.getAttribute("valor"))'>
+																		 <custom-attributes valor="${each}"/>
+																	</label>
+																</h:td>
+															</h:tr>
+															<h:tr>
+																<h:td>															
+																	<label
+																		value="${each.resultado}" />
+																</h:td>
+															</h:tr>
+															<h:tr if="${!(each.comentario eq '')}">
+																<h:td >
+																	<div
+																style="margin:10px; background-color:#E1E1E1;padding:15px;overflow:hidden;" >
+																<h:table border="0" width="100%">
+																	<h:tr>
+																		<h:td>
+																			<div>
+																				<label
+																					value="Motivo: ${each.comentario}" />
+																			</div>
+																		</h:td>
+																	</h:tr>
+																</h:table>
+																<h:hr
+																	style="color:#EFF0F0" />
+															</div>
+																</h:td>
+															</h:tr>
+														</h:table>
+													</row>
+												</rows>
+											</grid>
+										
+										</div>
+							</tabpanel>
+						</tabpanels>
+					</tabbox>
+				</center>
+			</borderlayout>
+		</div>
+		<div align="right" height="54px" style="background:#635fa8">
+			<button id="btnGuardar" label="${labels.guardar}" image="/images/document_save.png" orient="vertical" if="${(documento.estatus eq 'Nuevo' or documento.estatus eq 'Rechazado') and documento.usuarioActual eq usuario }">
+				<attribute name="onClick">
+					<![CDATA[
+						try
+						{	
+							servicioAdministrarConfiguracion.asignarValoresDocumento(documento, editDocumento);
+							servicioAdministrarConfiguracion.verificarDocumento(documento);
+							servicioAdministrarConfiguracion.guardarDocumento(documento);
+							alert("Datos Guardados con Exito");
+							editDocumento.setAttribute("accion","A");
+							editDocumento.detach();
+						}
+						catch (org.sevenlabs.exception.SevenLabsException sle)
+						{
+							alert(sle.getMessage());
+						}
+					]]>
+				</attribute>
+			</button>
+			<button id="btnEnviar" label="${labels.enviar}" image="/images/notebook_go.png" orient="vertical" if="${documento.estatus eq 'Nuevo' and documento.usuarioActual eq usuario }">
+				<attribute name="onClick">
+					<![CDATA[
+						try
+						{	
+							if (documento.getAprobadores().size() > 0)
+							{
+								org.modelo.dto.DocumentoAprobador dap = documento.proximoAprobador();
+								dap.setFechaRecepcion(java.util.Calendar.getInstance().getTime());
+								documento.setUsuarioActual(dap.getAprobador());
+								documento.setEstatus("En Revision");
+								
+								org.modelo.dto.HistorialDocumento hdoc = new org.modelo.dto.HistorialDocumento();
+								hdoc.setDocumento(documento);
+								hdoc.setFecha(java.util.Calendar.getInstance().getTime());
+								hdoc.setOcurrencia("Documento Enviado a " + dap.getAprobador().getNombres() + " " + dap.getAprobador().getApellidos() + " Para Revision");
+								hdoc.setUsuario(usuario);
+								documento.getOcurrencias().add(hdoc);
+								
+								servicioAdministrarConfiguracion.asignarValoresDocumento(documento, editDocumento);
+								servicioAdministrarConfiguracion.verificarDocumentoCompleto(documento);
+								servicioAdministrarConfiguracion.guardarDocumento(documento);
+								servicioAdministrarConfiguracion.enviarNotificacionDocumento(documento.getTipoDocumento().getNombre() + " Enviado Para Aprobacion: " + documento.getTitulo(), documento);
+								alert("Documento Enviado con Exito al Aprobador: " + documento.getUsuarioActual().getNombres() + " " + documento.getUsuarioActual().getApellidos());
+								editDocumento.setAttribute("accion","A");
+								editDocumento.detach();
+							}
+							else
+							{
+								alert("Debe Seleccionar los Usuarios Aprobadores");
+							}
+						}
+						catch (org.sevenlabs.exception.SevenLabsException sle)
+						{	
+							alert(sle.getMessage());
+						}
+						catch (Exception ex)
+						{	
+							alert(ex.getLocalizedMessage());
+						}
+					]]>
+				</attribute>
+			</button>
+			<button id="btnReEnviar" label="${labels.reenviar}" image="/images/notebook_go.png" orient="vertical" if="${documento.estatus eq 'Rechazado' and documento.usuarioActual eq usuario }">
+				<attribute name="onClick">
+					<![CDATA[
+						try
+						{	
+							
+							org.modelo.dto.DocumentoAprobador dap = documento.proximoAprobador();
+							dap.setFechaRecepcion(java.util.Calendar.getInstance().getTime());
+							documento.setUsuarioActual(dap.getAprobador());
+							documento.setEstatus("En Revision");
+							
+							org.modelo.dto.HistorialDocumento hdoc = new org.modelo.dto.HistorialDocumento();
+							hdoc.setDocumento(documento);
+							hdoc.setFecha(java.util.Calendar.getInstance().getTime());
+							hdoc.setOcurrencia("Documento ReEnviado a " + dap.getAprobador().getNombres() + " " + dap.getAprobador().getApellidos() + " Para Revision");
+							hdoc.setUsuario(usuario);
+							documento.getOcurrencias().add(hdoc);
+							
+							servicioAdministrarConfiguracion.asignarValoresDocumento(documento, editDocumento);
+							servicioAdministrarConfiguracion.verificarDocumentoCompleto(documento);
+							servicioAdministrarConfiguracion.guardarDocumento(documento);
+							servicioAdministrarConfiguracion.enviarNotificacionDocumento(documento.getTipoDocumento().getNombre() + " ReEnviado Para Aprobacion: " + documento.getTitulo(), documento);
+							alert("Documento Enviado con Exito al Aprobador: " + documento.getUsuarioActual().getNombres() + " " + documento.getUsuarioActual().getApellidos());
+							editDocumento.setAttribute("accion","A");
+							editDocumento.detach();
+						}
+						catch (org.sevenlabs.exception.SevenLabsException sle)
+						{
+							alert(sle.getMessage());
+						}
+					]]>
+				</attribute>
+			</button>
+			<button id="btnAprobar" label="${labels.aprobar}" image="/images/notebook_accept.png" orient="vertical" if="${documento.estatus eq 'En Revision' and documento.usuarioActual eq usuario }">
+				<attribute name="onClick">
+					<![CDATA[
+						try
+						{	
+							Map parametros = new HashMap();
+							parametros.put("titulo","Comentarios de Aprobacion");
+							Window window = (Window)Executions.createComponents("/WEB-INF/ventanas/editComentario.zul", null,parametros);
+							window.doModal();
+							if (window.getAttribute("accion").equals("A"))
+							{	
+								org.modelo.dto.DocumentoAprobador dapaa = documento.aprobadorActual(usuario);
+								dapaa.setFechaAprobacion(java.util.Calendar.getInstance().getTime());
+								dapaa.setResultado("Aprobado");
+								dapaa.setComentario(window.getAttribute("comentario"));
+								
+								org.modelo.dto.DocumentoAprobador dap = documento.proximoAprobador();
+								
+								String mensaje;
+								String mensajeNot;
+								if (dap == null)
+								{
+									documento.setEstatus("Aprobado");
+									documento.setUsuarioActual(null);
+									documento.setFechaAprobacion(java.util.Calendar.getInstance().getTime());
+									mensaje = "Documento Aprobado";
+									mensajeNot = documento.getTipoDocumento().getNombre() + " Termino el Ciclo de Aprobacion Por " + dapaa.getAprobador().getNombres() + " " + dapaa.getAprobador().getApellidos() + ": " + documento.getTitulo();
+									
+									org.modelo.dto.HistorialDocumento hdoc = new org.modelo.dto.HistorialDocumento();
+									hdoc.setDocumento(documento);
+									hdoc.setFecha(java.util.Calendar.getInstance().getTime());
+									hdoc.setOcurrencia("Documento Aprobado Por " + dapaa.getAprobador().getNombres() + " " + dapaa.getAprobador().getApellidos());
+									hdoc.setComentario(window.getAttribute("comentario"));
+									hdoc.setUsuario(usuario);
+									documento.getOcurrencias().add(hdoc);
+								}
+								else
+								{
+									mensajeNot = documento.getTipoDocumento().getNombre() + " Aprobada Por " + dapaa.getAprobador().getNombres() + " " + dapaa.getAprobador().getApellidos() + ": " + documento.getTitulo();
+									servicioAdministrarConfiguracion.enviarNotificacionDocumento(documento.getTipoDocumento().getNombre() + " Aprobada Por: " + documento.getTitulo(), documento);
+									mensaje = "Documento Enviado con Exito al Aprobador: " + dap.getAprobador().getNombres() + " " + dap.getAprobador().getApellidos();
+									dap.setFechaRecepcion(java.util.Calendar.getInstance().getTime());
+									documento.setUsuarioActual(dap.getAprobador());
+									
+									org.modelo.dto.HistorialDocumento hdoc = new org.modelo.dto.HistorialDocumento();
+									hdoc.setDocumento(documento);
+									hdoc.setFecha(java.util.Calendar.getInstance().getTime());
+									hdoc.setOcurrencia("Documento Aprobado Por " + dapaa.getAprobador().getNombres() + " " + dapaa.getAprobador().getApellidos());
+									hdoc.setComentario(window.getAttribute("comentario"));
+									hdoc.setUsuario(usuario);
+									documento.getOcurrencias().add(hdoc);
+									
+									hdoc = new org.modelo.dto.HistorialDocumento();
+									hdoc.setDocumento(documento);
+									hdoc.setFecha(java.util.Calendar.getInstance().getTime());
+									hdoc.setOcurrencia("Documento Enviado a " + dap.getAprobador().getNombres() + " " + dap.getAprobador().getApellidos() + " Para Revision");
+									hdoc.setUsuario(usuario);
+									documento.getOcurrencias().add(hdoc);
+								}
+								
+								servicioAdministrarConfiguracion.enviarNotificacionDocumento(mensajeNot, documento);
+								servicioAdministrarConfiguracion.guardarDocumento(documento);
+								alert(mensaje);
+								editDocumento.setAttribute("accion","A");
+								editDocumento.detach();
+							}
+						}
+						catch (org.sevenlabs.exception.SevenLabsException sle)
+						{
+							alert(sle.getMessage());
+						}
+					]]>
+				</attribute>
+			</button>
+			<button id="btnRechazar" label="${labels.rechazar}" image="/images/notebook_delete3.png" orient="vertical" if="${documento.estatus eq 'En Revision' and documento.usuarioActual eq usuario }">
+				<attribute name="onClick">
+					<![CDATA[
+						try
+						{	
+							Map parametros = new HashMap();
+							parametros.put("titulo","Comentarios de Rechazo");
+							Window window = (Window)Executions.createComponents("/WEB-INF/ventanas/editComentario.zul", null,parametros);
+							window.doModal();
+							if (window.getAttribute("accion").equals("A"))
+							{
+								org.modelo.dto.DocumentoAprobador dapaa = documento.aprobadorActual(usuario);
+								dapaa.setComentario(window.getAttribute("comentario"));
+								dapaa.setFechaAprobacion(java.util.Calendar.getInstance().getTime());
+								dapaa.setResultado("Rechazado");
+								documento.setEstatus("Rechazado");
+								documento.setUsuarioActual(documento.getUsuarioElaborador());
+								
+								org.modelo.dto.HistorialDocumento hdoc = new org.modelo.dto.HistorialDocumento();
+								hdoc.setDocumento(documento);
+								hdoc.setFecha(java.util.Calendar.getInstance().getTime());
+								hdoc.setOcurrencia("Documento Rechazado Por " + dapaa.getAprobador().getNombres() + " " + dapaa.getAprobador().getApellidos());
+								hdoc.setComentario(window.getAttribute("comentario"));
+								hdoc.setUsuario(usuario);
+								documento.getOcurrencias().add(hdoc);
+								
+								servicioAdministrarConfiguracion.enviarNotificacionDocumento(documento.getTipoDocumento().getNombre() + " Rechazada Por " + dapaa.getAprobador().getNombres() + " " + dapaa.getAprobador().getApellidos() + ": " + documento.getTitulo(), documento);
+								servicioAdministrarConfiguracion.guardarDocumento(documento);
+								alert("Documento Rechazado con Exito");
+								editDocumento.setAttribute("accion","A");
+								editDocumento.detach();
+							}
+						}
+						catch (org.sevenlabs.exception.SevenLabsException sle)
+						{
+							alert(sle.getMessage());
+						}
+					]]>
+				</attribute>
+			</button>
+			<button id="btnActualizar" label="${labels.actualizar}" image="/images/notebookupdate.png" orient="vertical" if="${documento.estatus eq 'Aprobado' and usuario.rolSistema.nombre eq 'Administrador' }">
+				<attribute name="onClick">
+					<![CDATA[
+						try
+						{		
+							org.modelo.dto.HistorialDocumento hdoc = new org.modelo.dto.HistorialDocumento();
+							hdoc.setDocumento(documento);
+							hdoc.setFecha(java.util.Calendar.getInstance().getTime());
+							hdoc.setOcurrencia("Documento Actualizado Por " + usuario.getNombres() + " " + usuario.getApellidos());
+							hdoc.setUsuario(usuario);
+							documento.getOcurrencias().add(hdoc);
+								
+							documento.setEstatus("Vigente");
+							servicioAdministrarConfiguracion.enviarNotificacionDocumento(documento.getTipoDocumento().getNombre() + " Actualizado Por " + usuario.getNombres() + " " + usuario.getApellidos() + ": " + documento.getTitulo(), documento);
+							servicioAdministrarConfiguracion.guardarDocumento(documento);
+							alert("Documento Actualizado con Exito");
+							editDocumento.setAttribute("accion","A");
+							editDocumento.detach();
+						}
+						catch (org.sevenlabs.exception.SevenLabsException sle)
+						{
+							alert(sle.getMessage());
+						}
+					]]>
+				</attribute>
+			</button>
+			<button id="btnCancelar" label="${labels.cancelar}" image="/images/remover.png" orient="vertical">
+				<attribute name="onClick">
+					<![CDATA[
+						editDocumento.setAttribute("accion","C");
+						editDocumento.detach();
+					]]>
+				</attribute>
+			</button>
+		</div>
+		
+		<hbox visible="false" id="hbxRefDocs">
+			<vbox>
+				<toolbar mold="default" style="background:#FFFFFF;">
+					<button label="${labels.agregar} ${labels.referencia}" image="/images/settings_add.png"  id="IncluirRef" >
+						<attribute name="onClick">
+							<![CDATA[
+								Map parametros = new HashMap();
+								parametros.put("tipos", listaTipos);
+								parametros.put("estado", "Vigente");
+								parametros.put("seleccion", "varios");
+								Window window = (Window)Executions.createComponents("/WEB-INF/ventanas/catDocumentos.zul", null,parametros);
+								window.doModal();
+								if (window.getAttribute("accion").equals("A"))
+								{
+									for (Listitem li : window.getAttribute("objeto"))
+							        {
+										documento.getReferenciasDocumentos().add(li.getValue());
+							        }
+									binder.loadAll();
+								}
+								
+							]]>
+						</attribute>
+					</button>
+					<button label="${labels.borrar} ${labels.todas} ${labels.referencias} ${labels.seleccionadas}" image="/images/settings_delete.png" id="EliminarTodoRef" >
+						<attribute name="onClick">
+							<![CDATA[
+								if (Messagebox.show("Seguro de Remover Todos Los Elementos Seleccionados?", "Eliminar Todos", Messagebox.OK + Messagebox.CANCEL, Messagebox.INFORMATION) == Messagebox.OK)
+								{
+									for (Listitem li : boxref.getSelectedItems())
+									{
+										org.modelo.dto.Documento doc = li.getValue();
+										try
+										{
+								    		documento.getReferenciasDocumentos().remove(doc);
+										}
+										catch(org.sevenlabs.exception.SevenLabsException e)
+										{
+											alert(e.getMessage());
+										}
+									}
+									binder.loadAll();
+								}
+							]]>
+						</attribute>
+					</button>
+				</toolbar>
+				<listbox id="boxref" fixedLayout="true" multiple="true" mold="paging" pageSize="20" width="100%" model="@{documento.referenciasDocumentos}" checkmark="true">
+    				<listhead>
+    					<listheader width="5%" />
+    					<listheader label="${labels.codigo}" align="center" valign="middle" width="15%" />
+						<listheader label="${labels.nombre}" align="center" valign="middle" width="40%" />
+						<listheader label="${labels.area}" align="center" valign="middle" width="30%" />
+						<listheader label="Ops." align="center" valign="middle" width="10%" />
+    				</listhead>
+    				<listitem sclass="row-border item" self="@{each=objetoref}" value="@{objetoref}">
+    					<listcell/>
+						<listcell label="@{objetoref.codigo}"/>
+  						<listcell label="@{objetoref.nombre}"/>
+  						<listcell label="@{objetoref.area.nombre}"/>
+  						<listcell>
+							<image tooltiptext="${labels.borrar} ${labels.referencia}" src="/images/settings_remove.png" id="EliminarRef" width="18px" height="18px">
+								<attribute name="onClick">
+									<![CDATA[
+										org.modelo.dto.Documento doc = ((Listitem)self.getParent().getParent()).getValue();
+										documento.getReferenciasDocumentos().remove(doc);
+										binder.loadAll();
+									]]>
+								</attribute>
+							</image>
+  						</listcell>
+    				</listitem>
+				</listbox>
+			</vbox>
+		</hbox>
+		
+		<hbox visible="false" id="hbxRefUsus">
+			<vbox>
+				<toolbar mold="default" style="background:#FFFFFF;">
+					<button label="${labels.agregar} ${labels.referencia}" image="/images/settings_add.png"  id="IncluirRefU" >
+						<attribute name="onClick">
+							<![CDATA[
+								Map parametros = new HashMap();
+								parametros.put("seleccion", "varios");
+								Window window = (Window)Executions.createComponents("/WEB-INF/ventanas/catUsuarios.zul", null,parametros);
+								window.doModal();
+								if (window.getAttribute("accion").equals("A"))
+								{
+									for (Listitem li : window.getAttribute("objeto"))
+							        {
+										documento.getReferenciasUsuarios().add(li.getValue());
+							        }
+									binder.loadAll();
+								}
+								
+							]]>
+						</attribute>
+					</button>
+					<button label="${labels.borrar} ${labels.todas} ${labels.referencias} ${labels.seleccionadas}" image="/images/settings_delete.png" id="EliminarTodoRefU" >
+						<attribute name="onClick">
+							<![CDATA[
+								if (Messagebox.show("Seguro de Remover Todos Los Elementos Seleccionados?", "Eliminar Todos", Messagebox.OK + Messagebox.CANCEL, Messagebox.INFORMATION) == Messagebox.OK)
+								{
+									for (Listitem li : boxrefusu.getSelectedItems())
+									{
+										org.modelo.dto.Usuario usu = li.getValue();
+										try
+										{
+								    		documento.getReferenciasUsuarios().remove(usu);
+										}
+										catch(org.sevenlabs.exception.SevenLabsException e)
+										{
+											alert(e.getMessage());
+										}
+									}
+									binder.loadAll();
+								}
+							]]>
+						</attribute>
+					</button>
+				</toolbar>
+				<listbox id="boxrefusu" fixedLayout="true" multiple="true" mold="paging" pageSize="20" width="100%" model="@{documento.referenciasUsuarios}" checkmark="true">
+    				<listhead>
+    					<listheader width="5%" />
+    					<listheader width="30%" label="Nombres" align="center"/>
+						<listheader width="30%" label="Apellidos" align="center"/>
+						<listheader width="25%" label="Cargo"  align="center"/>
+						<listheader label="Ops." align="center" valign="middle" width="10%" />
+    				</listhead>
+    				<listitem sclass="row-border item" self="@{each=objetorefu}" value="@{objetorefu}">
+    					<listcell/>
+						<listcell
+							label="@{objetorefu.nombres}" />
+						<listcell
+							label="@{objetorefu.apellidos}" />
+						<listcell
+							label="" />
+  						<listcell>
+							<image tooltiptext="${labels.borrar} ${labels.referencia}" src="/images/settings_remove.png" id="EliminarRefU" width="18px" height="18px">
+								<attribute name="onClick">
+									<![CDATA[
+										org.modelo.dto.Usuario usu = ((Listitem)self.getParent().getParent()).getValue();
+										documento.getReferenciasUsuarios().remove(usu);
+										binder.loadAll();
+									]]>
+								</attribute>
+							</image>
+  						</listcell>
+    				</listitem>
+				</listbox>
+			</vbox>
+		</hbox>
+		
+		<hbox visible="false" id="hbxRefTerms">
+			<vbox>
+				<toolbar mold="default" style="background:#FFFFFF;">
+					<button label="${labels.agregar} ${labels.referencia}" image="/images/settings_add.png"  id="IncluirRefT" >
+						<attribute name="onClick">
+							<![CDATA[
+								Map parametros = new HashMap();
+								parametros.put("seleccion", "varios");
+								Window window = (Window)Executions.createComponents("/WEB-INF/ventanas/catTerminos.zul", null,parametros);
+								window.doModal();
+								if (window.getAttribute("accion").equals("A"))
+								{
+									for (Listitem li : window.getAttribute("objeto"))
+							        {
+										documento.getReferenciasTerminos().add(li.getValue());
+							        }
+									binder.loadAll();
+								}
+								
+							]]>
+						</attribute>
+					</button>
+					<button label="${labels.borrar} ${labels.todas} ${labels.referencias} ${labels.seleccionadas}" image="/images/settings_delete.png" id="EliminarTodoRefT" >
+						<attribute name="onClick">
+							<![CDATA[
+								if (Messagebox.show("Seguro de Remover Todos Los Elementos Seleccionados?", "Eliminar Todos", Messagebox.OK + Messagebox.CANCEL, Messagebox.INFORMATION) == Messagebox.OK)
+								{
+									for (Listitem li : boxrefterm.getSelectedItems())
+									{
+										org.modelo.dto.Glosario glo = li.getValue();
+										try
+										{
+								    		documento.getReferenciasTerminos().remove(glo);
+										}
+										catch(org.sevenlabs.exception.SevenLabsException e)
+										{
+											alert(e.getMessage());
+										}
+									}
+									binder.loadAll();
+								}
+							]]>
+						</attribute>
+					</button>
+				</toolbar>
+				<listbox id="boxrefterm" fixedLayout="true" multiple="true" mold="paging" pageSize="20" width="100%" model="@{documento.referenciasTerminos}" checkmark="true">
+    				<listhead>
+    					<listheader width="5%" />
+						<listheader label="${labels.nombre}" align="center" valign="middle" width="85%" />
+						<listheader label="Ops." align="center" valign="middle" width="10%" />
+    				</listhead>
+    				<listitem sclass="row-border item" self="@{each=objetoreft}" value="@{objetoreft}">
+    					<listcell/>
+  						<listcell label="@{objetoreft.nombre}"/>
+  						<listcell>
+							<image tooltiptext="${labels.borrar} ${labels.referencia}" src="/images/settings_remove.png" id="EliminarRefT" width="18px" height="18px">
+								<attribute name="onClick">
+									<![CDATA[
+										org.modelo.dto.Glosario glo = ((Listitem)self.getParent().getParent()).getValue();
+										documento.getReferenciasTerminos().remove(glo);
+										binder.loadAll();
+									]]>
+								</attribute>
+							</image>
+  						</listcell>
+    				</listitem>
+				</listbox>
+			</vbox>
+		</hbox>
+		<zscript>
+			<![CDATA[
+			         void addItem()
+			         {
+			        	 alert("1");
+			         }
+			]]>
+		</zscript>
+	</window>
+</zk>

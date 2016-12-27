@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?variable-resolver class="org.zkoss.zkplus.spring.DelegatingVariableResolver"?>
+<?init class="org.zkoss.zkplus.databind.AnnotateDataBinderInit" arg0="./catDescripciones"?>
+
+
+<zk xmlns:n="http://www.zkoss.org/2005/zk/native">
+
+	<zscript src="/WEB-INF/commons/configureContext.zs" />
+
+	<zscript>
+<![CDATA[
+	
+	Object entidadCatalogo = null;
+	List usuarios = new ArrayList();
+	
+	Comparator cAreaAsc = new Comparator() {
+		public int compare(org.modelo.dto.Documento i1, org.modelo.dto.Documento i2) {
+			if (i1.getArea() == null || i2.getArea() == null)
+			{
+				return 0;
+			}
+			else
+			{
+				return i1.getArea().getNombre().compareTo(i2.getArea().getNombre());
+			}
+		}
+	};
+	
+	Comparator cAreaDes = new Comparator() {
+		public int compare(org.modelo.dto.Documento i1, org.modelo.dto.Documento i2) {
+			if (i1.getArea() == null || i2.getArea() == null)
+			{
+				return 0;
+			}
+			else
+			{
+				return i1.getArea().getNombre().compareTo(i2.getArea().getNombre()) * -1;
+			}
+		}
+	};
+	
+	Comparator cNombresAsc = new Comparator() {
+		public int compare(org.modelo.dto.Documento i1, org.modelo.dto.Documento i2) {
+			if (i1.getTitulo() == null || i2.getTitulo() == null)
+			{
+				return 0;
+			}
+			else
+			{
+				return i1.getTitulo().compareTo(i2.getTitulo());
+			}
+		}
+	};
+	
+	Comparator cNombresDes = new Comparator() {
+		public int compare(org.modelo.dto.Documento i1, org.modelo.dto.Documento i2) {
+			if (i1.getTitulo() == null || i2.getTitulo() == null)
+			{
+				return 0;
+			}
+			else
+			{
+				return i1.getTitulo().compareTo(i2.getTitulo()) * -1;
+			}
+		}
+	};
+	
+]]>
+</zscript>
+
+	<window id="catDescripciones" title="${labels.descripcionDeCargo}" maximizable="false" border="normal"
+		width="60%" height="80%">
+		<caption image="/images/window.png" />
+				<div height="87%">	
+								<panel title="" height="90%"
+							border="normal" collapsible="false">
+							<panelchildren>
+								<borderlayout>
+									<center autoscroll="true">
+										<listbox id="lstbox"
+											model="@{descripciones}" selectedItem="@{entidadCatalogo}"
+											 mold="paging" pageSize="50" >
+											<listhead sizable="true">	
+												<listheader width="20%" label="Codigo"   align="center"/>
+												<listheader width="40%" label="Nombre" sortAscending="${cNombresAsc}" sortDescending="${cNombresDes}" align="center"/>
+												<listheader width="40%" label="Area" sortAscending="${cAreaAsc}" sortDescending="${cAreaDes}" align="center"/>
+											</listhead>
+											<listitem
+												sclass="row-border item" self="@{each=actualCatalogo}" value="@{actualCatalogo}">
+												<listcell
+													label="@{actualCatalogo.codigo}" />
+												<listcell
+													label="@{actualCatalogo.titulo}" />
+												<listcell
+													label="@{actualCatalogo.area.nombre}" />
+											</listitem>
+										</listbox>
+									</center>
+								</borderlayout>
+							</panelchildren>
+						</panel>
+				</div>
+
+				<div align="right" height="13%" style="background:#635fa8">
+					<button id="btnAceptar" label="Aceptar"
+						image="/images/aceptar.png" orient="vertical">
+						<attribute name="onClick">
+							<![CDATA[
+								catDescripciones.setAttribute("objeto",lstbox.getSelectedItem().getValue());
+								catDescripciones.setAttribute("accion","A");
+								catDescripciones.detach();
+							]]>
+						</attribute>
+					</button>
+					<button id="btnCancelar" label="Cancelar"
+						image="/images/remover.png" orient="vertical">
+						<attribute name="onClick">
+							<![CDATA[
+								catDescripciones.setAttribute("accion","C");
+								catDescripciones.detach();
+							]]>
+						</attribute>
+					</button>
+				</div>
+		<zscript>
+			<![CDATA[
+
+			]]>
+		 </zscript>
+	</window>
+</zk>

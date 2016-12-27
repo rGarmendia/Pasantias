@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?variable-resolver class="org.zkoss.zkplus.spring.DelegatingVariableResolver"?>
+<?init class="org.zkoss.zkplus.databind.AnnotateDataBinderInit" arg0="./catTiposDocumento"?>
+
+
+<zk xmlns:n="http://www.zkoss.org/2005/zk/native">
+
+	<zscript src="/WEB-INF/commons/configureContext.zs" />
+
+	<zscript>
+<![CDATA[
+	String visible = arg.get("visible");
+	
+	Object entidadCatalogo = null;
+	List tipDocs = new ArrayList();
+
+	if (visible.equals("P"))
+	{
+		tipDocs = servicioAdministrarConfiguracion.buscarTiposDocumentosPrincipales();
+	}
+	else
+	{
+		tipDocs = servicioAdministrarConfiguracion.buscarTiposDocumentosTodos();
+	}
+]]>
+</zscript>
+
+	<window id="catTiposDocumento" title="Tipos de Documentos" maximizable="false" border="normal"
+		width="60%" height="500px">
+		<caption image="/images/window.png" />
+				<div height="90%">
+								<panel title="" height="90%"
+							border="normal" collapsible="false">
+							<panelchildren>
+								<borderlayout>
+									<center autoscroll="true">
+										<listbox id="lstbox"
+											model="@{tipDocs}" selectedItem="@{entidadCatalogo}"
+											 mold="paging" pageSize="50" multiple="false">
+											<listhead sizable="true">
+												<listheader width="100%" label="Nombre" align="center"/>
+											</listhead>
+											<listitem
+												sclass="row-border item" self="@{each=actualCatalogo}" value="@{actualCatalogo}">
+												<listcell
+													label="@{actualCatalogo.nombre}" />
+											</listitem>
+										</listbox>
+									</center>
+								</borderlayout>
+							</panelchildren>
+						</panel>
+				</div>
+
+				<div align="right" height="10%" style="background:#635fa8">
+					<button id="btnAceptar" label="Aceptar"
+						image="/images/aceptar.png" orient="vertical">
+						<attribute name="onClick">
+							<![CDATA[
+								catTiposDocumento.setAttribute("objeto",lstbox.getSelectedItem().getValue());
+								catTiposDocumento.setAttribute("accion","A");
+								catTiposDocumento.detach();
+							]]>
+						</attribute>
+					</button>
+					<button id="btnCancelar" label="Cancelar"
+						image="/images/remover.png" orient="vertical">
+						<attribute name="onClick">
+							<![CDATA[
+								catTiposDocumento.setAttribute("accion","C");
+								catTiposDocumento.detach();
+							]]>
+						</attribute>
+					</button>
+				</div>
+		<zscript>
+			<![CDATA[
+
+			]]>
+		 </zscript>
+	</window>
+</zk>

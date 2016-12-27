@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?variable-resolver class="org.zkoss.zkplus.spring.DelegatingVariableResolver"?>
+<?init class="org.zkoss.zkplus.databind.AnnotateDataBinderInit" arg0="./lstTareasUsuarios"?>
+
+<zk xmlns:n="http://www.zkoss.org/2005/zk/native">
+
+	<zscript src="/WEB-INF/commons/configureContext.zs" />
+	<zscript src="/WEB-INF/commons/configureSecurity.zs" />
+
+	<zscript>
+    	<![CDATA[    
+			String cual = arg.get("cual");
+			List usuarios= servicioAdministrarConfiguracion.buscarTareasPorUsuarioPorRol(usuario, cual);
+            List objetosTareas = new ArrayList();
+            void doLoadData(Usuario usuarioSel)
+            {
+            	objetosTareas = servicioAdministrarConfiguracion.buscarTodasTareasPorUsuario(usuarioSel);
+            	if (objetosTareas.size() == 0) {
+            		alert("There are no pending taskss");
+        		}
+                binder.loadAll();
+            }
+            
+        ]]>
+    </zscript>
+
+	<panel title="Tareas de ${cual}"  height="580px" border="normal" closable="true" id="lstTareasUsuarios">
+		<panelchildren style="padding : 5px;" >
+					<separator></separator>
+    				<hbox>
+    							<label value="${cual}"></label>
+    							<combobox id="cmbusuario" model="@{usuarios}" cols="20">
+    								<attribute name="onSelect">
+										<![CDATA[
+											doLoadData(self.getSelectedItem().getValue());
+										]]>
+									</attribute>
+									<comboitem self="@{each=usu}" label="@{usu.nombreCompleto}" value="@{usu}"/>
+								</combobox>
+    						</hbox>
+    						<separator></separator>
+    				<borderlayout>
+    					<center autoscroll="true">
+    						<grid preloadSize="14" model="@{objetosTareas}" mold="paging" pageSize="14">
+								<columns sizable="true">
+									<column
+										label="No" align="center" valign="middle"
+										width="8%" />
+									<column
+										label="Date" align="center" valign="middle"
+										width="11%" />
+									<column
+										label="Tipo" align="center" valign="middle"
+										width="12%" />
+									<column
+										label="Current User" align="center" valign="middle"
+										width="30%" />
+									<column
+										label="Status" align="center" valign="middle"
+										width="20%" />
+									<column
+										label="Weather" align="center" valign="middle"
+										width="10%" />
+									<column
+										label="Oper" align="center" valign="middle" width="9%"/>
+								</columns>
+								<rows>
+									<row self="@{each=objetoRow}" value="@{objetoRow}">
+										<label
+											value="@{objetoRow.idtarea}">
+										</label>
+										<label
+											value="@{objetoRow.fecha, converter='org.zkforge.converters.DateCustom'}" >
+											<custom-attributes
+												format="MM/dd/yy" />
+										</label>
+										<label
+											value="@{objetoRow.tipoTarea}"/>
+										<label
+											value="@{objetoRow.usuario.nombreCompleto}"/>
+										<label
+											value="@{objetoRow.estado}"
+											style="font-weight: bold; color :red;">
+										</label>
+										<label
+											value="@{objetoRow.tiempoEspera}">
+										</label>
+										<hbox
+											spacing="5px">
+											<toolbarbutton
+												style="font-size: 9px; font-weight: normal;"
+												use="org.sevenlabs.vista.zk.controls.BotonAcciones"
+												objeto="@{objetoRow}"
+												image="/images/arrow.png"
+												tooltiptext="Ejecutar Tarea">
+												<attribute name="onClick">
+													<![CDATA[
+													{
+														c = event.target;
+								        	        	org.sevenlabs.modelo.utils.Tarea objetoT = c.objeto;;
+								        				Map parametros = new HashMap();
+								        				parametros.put("modo","E");
+								        				String ruta;
+								        				if (objetoT.objeto instanceof org.sevenlabs.modelo.dto.Acuerdo)
+								        				{
+								        					parametros.put("acuerdo",objetoT.objeto);
+								        					ruta = "/WEB-INF/ventanas/editAcuerdo.zul";
+								        				}
+								        				
+								        				Window window = (Window)Executions.createComponents(ruta, null,parametros);
+								        				window.doModal();
+								        				if (window.getAttribute("accion").trim().equals("A")) {
+								        					objetosNotificaciones.clear();
+								        					doLoadData();
+								        				}
+													}
+													]]>
+												</attribute>
+											</toolbarbutton>
+										</hbox>
+									</row>
+								</rows>
+							</grid>
+							
+						</center>
+					</borderlayout>
+		</panelchildren>
+	</panel>
+	<zscript>
+		<![CDATA[
+			
+        ]]>
+		</zscript>
+</zk>

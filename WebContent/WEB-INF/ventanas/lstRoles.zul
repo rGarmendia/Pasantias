@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?variable-resolver class="org.zkoss.zkplus.spring.DelegatingVariableResolver"?>
+
+<?init class="org.zkoss.zkplus.databind.AnnotateDataBinderInit" arg0="./lstRoles"?>
+<zk xmlns:n="http://www.zkoss.org/2005/zk/native">
+
+	<zscript src="/WEB-INF/commons/configureContext.zs" />
+	<zscript src="/WEB-INF/commons/configureSecurity.zs" />
+	<zscript>
+	<![CDATA[
+		List all_objetos = new ArrayList();
+		
+		void doLoadData()
+		{
+			all_objetos = servicioAdministrarConfiguracion.buscarRolesTodos();
+			
+			if (all_objetos.size() == 0) 
+				{
+					alert("No Hay Roles Incluidos");
+				}
+			binder.loadAll();
+		}
+		doLoadData();
+	]]>
+	</zscript>
+	<panel title="Roles" id="lstRoles" height="100%" border="normal" closable="true" >
+		<toolbar mold="default" style="background:#635fa8;">
+			<button label="${labels.nuevo} ${labels.rol}" image="/images/incluir.png"  id="Incluir" >
+				<attribute name="onClick">
+					<![CDATA[
+						Object objeto = new org.modelo.dto.Rol();
+						Map parametros = new HashMap();
+						parametros.put("modo","N");
+						parametros.put("objeto",objeto);
+						Window window = (Window)Executions.createComponents("/WEB-INF/ventanas/editRol.zul", null,parametros);
+						window.doModal();
+						if (window.getAttribute("accion").equals("A"))
+						{
+							all_objetos.clear();
+							doLoadData();
+						}
+						
+					]]>
+				</attribute>
+			</button>
+			<button label="${labels.borrar} ${labels.todos} ${labels.rol} ${labels.seleccionados}" image="/images/trash_can2_delete.png"  id="EliminarTodos" >
+				<attribute name="onClick">
+					<![CDATA[
+					    if (Messagebox.show("Seguro de Eliminar Todos Los Elementos Seleccionados?", "Eliminar Todos", Messagebox.OK + Messagebox.CANCEL, Messagebox.INFORMATION) == Messagebox.OK)
+					    {
+					    	for (Listitem li : box.getSelectedItems())
+					    	{
+					    		org.modelo.dto.Rol rol = li.getValue();
+					    		try
+					    		{
+						    		servicioAdministrarConfiguracion.eliminarRol(rol);
+					    		}
+					    		catch(org.sevenlabs.exception.SevenLabsException e)
+					    		{
+					    			alert(e.getMessage());
+					    		}
+					    	}
+					    	all_objetos.clear();
+							doLoadData();
+					    }
+					]]>
+				</attribute>
+			</button>
+		</toolbar>
+		<panelchildren style="padding : 5px;">
+			<panel title="" height="450px">
+				<panelchildren >
+					<borderlayout>
+						<center autoscroll="true">
+							<listbox id="box" fixedLayout="true" multiple="true" mold="paging" pageSize="20" width="100%" model="@{all_objetos}" checkmark="true">
+    							<listhead>
+<!--     								<listheader label="Codigo" align="center" valign="middle" width="20%" /> -->
+									<listheader align="center" valign="middle" width="3%" />
+									<listheader label="${labels.nombre}" align="center" valign="middle" width="87%" />
+									<listheader label="Ops." align="center" valign="middle" width="10%" />
+    							</listhead>
+    							<listitem sclass="row-border item" self="@{each=objeto}" value="@{objeto}">
+<!-- 									<listcell label="@{objeto.codigo}"/> -->
+									<listcell/>
+  									<listcell label="@{objeto.nombre}"/>
+  									<listcell>
+  										<image tooltiptext="${labels.editar} ${labels.rol}" src="/images/editar.png" id="Editar" width="18px" height="18px">
+											<attribute name="onClick">
+												<![CDATA[
+													Object objeto = ((Listitem)self.getParent().getParent()).getValue();										
+													Map parametros = new HashMap();
+													parametros.put("modo","E");
+													parametros.put("objeto",objeto);
+													Window window = (Window)Executions.createComponents("/WEB-INF/ventanas/editRol.zul", null,parametros);
+													window.doModal();
+													if (window.getAttribute("accion").equals("A"))
+													{
+														all_objetos.clear();
+														doLoadData();
+													}	
+												]]>
+											</attribute>
+										</image>
+										<image tooltiptext="${labels.borrar} ${labels.rol}" src="/images/borrar.png" id="Eliminar" width="18px" height="18px">
+											<attribute name="onClick">
+												<![CDATA[
+												    try
+												    {
+														Object objeto = ((Listitem)self.getParent().getParent()).getValue();
+														servicioAdministrarConfiguracion.eliminarRol(objeto);
+														all_objetos.clear();
+														doLoadData();
+												    }
+												    catch (org.sevenlabs.exception.SevenLabsException sle)
+												    {
+												    	alert(sle.getMessage());
+												    }
+												]]>
+											</attribute>
+										</image>
+  									</listcell>
+    							</listitem>
+							</listbox> 				
+						</center>
+					</borderlayout>
+				</panelchildren>
+			</panel>
+		</panelchildren>
+		<zscript src="/WEB-INF/commons/configureSecurity.zs" />
+	</panel>
+</zk>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+
+<beans>
+
+	<import resource="classpath:applicationContext-modelo.xml" />
+	
+	<!-- DAO -->
+	<bean id="hibernateDAO" class="org.sevenlabs.modelo.dao.HibernateDAO">
+		<property name="sessionFactory">
+			<ref bean="sessionFactory" />
+		</property>
+	</bean>
+	
+	<!-- Servicios -->
+	<bean id="servicioAdministrarConfiguracionTarget" class="org.modelo.servicios.impl.ServicioAdministrarConfiguracion">
+		<property name="hibernateDAO" ref="hibernateDAO"></property>
+	</bean>
+	
+	<bean id="servicioAdministrarConfiguracion" class="org.springframework.aop.framework.ProxyFactoryBean">
+		<property name="proxyInterfaces">
+			<value>org.modelo.servicios.IServicioAdministrarConfiguracion</value>
+		</property>
+		<property name="interceptorNames">
+			<list>
+				<value>txInterceptor</value>
+				<value>servicioAdministrarConfiguracionTarget</value>
+			</list>
+		</property>
+	</bean>
+</beans>

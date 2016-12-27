@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN 2.0//EN" "http://www.springframework.org/dtd/spring-beans-2.0.dtd">
+
+<beans>
+
+	<bean name="securityConfig"
+		class="org.sevenlabs.vista.zk.SecurityConfig">
+		<property name="configurationFile"
+			value="classpath:/org/sevenlabs/vista/zk/securityConfig.xml">
+		</property>
+	</bean>
+
+	<bean name="app" class="org.sevenlabs.vista.zk.Application"> 
+		<property name="securityConfig" ref="securityConfig"></property>
+	</bean>
+
+	<!-- Integracion con Struts2 -->
+
+	<bean id="obeliscoConfigurator"
+		class="org.sevenlabs.vista.struts2.interceptor.Configurator">
+		<property name="app" ref="app"></property>
+	</bean>	
+
+
+	<bean id="inicioAction"
+		class="org.sevenlabs.vista.struts2.action.InicioAction">
+	</bean>
+
+</beans>

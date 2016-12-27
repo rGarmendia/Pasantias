@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?variable-resolver class="org.zkoss.zkplus.spring.DelegatingVariableResolver"?>
+<?init class="org.zkoss.zkplus.databind.AnnotateDataBinderInit"  arg0="./editTipoDocumento" ?>
+
+<zk xmlns:n="http://www.zkoss.org/2005/zk/native"
+	xmlns:h="http://www.w3.org/1999/xhtml">
+
+
+	<zscript src="/WEB-INF/commons/configureContext.zs" />
+	<zscript src="/WEB-INF/commons/configureDialog.zs" />
+
+	<zscript>
+		<![CDATA[
+		    
+			org.modelo.dto.TipoDocumento tipoDocumento = arg.get("objeto");
+			Set listaOriginal = new LinkedHashSet();
+			
+			for (org.modelo.dto.Campo cmp : tipoDocumento.getCampos())
+			{
+				listaOriginal.add(cmp);
+			}
+			
+			String modo = arg.get("modo");
+			
+			List estatuss= new ArrayList();
+			estatuss.add("Activo");
+			estatuss.add("Inactivo");
+			
+			tipoDocumento.ordenarCamposAsc();
+		]]>						
+	</zscript>
+	<window id="editTipoDocumento" title="Tipo de Documento" maximizable="false" maximized="false" border="normal" width="800px" height="650px">
+		<caption image="/images/window.png" />
+		<style src="/css/mystyle.css" dynamic="true" />
+		<div height="90%" style="overflow:auto">
+			<textbox visible="false" />
+			<tabbox orient="horizontal">
+				<tabs width="120px">
+					<tab label="${labels.datosGenerales}" />
+					<tab label="${labels.campos}" />
+				</tabs>
+				<tabpanels>
+					<tabpanel>
+						<grid>
+							<columns>
+								<column width="20%" align="right" />
+								<column width="80%" />
+							</columns>
+							<rows>
+								<row if="${modo eq 'E'}"> 
+									<label value="${labels.codigo}" />
+									<label value="@{tipoDocumento.codigo}"/>
+								</row>
+								<row >
+									<label class="obligatorio" value="${labels.nombre}" />
+									<textbox maxlength="60" id="txtnombre" cols="60" value="@{tipoDocumento.nombre}"/>									
+								</row>
+								<row>
+									<label value="${labels.patronDeCodigo}" />
+									<textbox maxlength="10" cols="10" value="@{tipoDocumento.patronCodigo}"/>									
+								</row>
+								<row>
+									<label value="Principal" />
+									<checkbox checked="@{tipoDocumento.principal}">
+										<attribute name="onCheck">
+											<![CDATA[
+												if (self.isChecked())
+												{
+													roWDocPadre.setVisible(false);
+													tipoDocumento.setTipoPadre(null);
+												}
+												else
+												{
+													roWDocPadre.setVisible(true);
+												}
+											]]>
+										</attribute>
+									</checkbox>									
+								</row>
+								<row id="roWDocPadre">
+									<label value="Documento Padre" />
+									<hbox>
+										<label id="lblDocPadre" value="@{tipoDocumento.tipoPadre.nombre}"/>
+										<button label="${labels.buscar}" image="/images/find.png" >
+											<attribute name="onClick">
+												<![CDATA[
+													Map parametros = new HashMap();
+													parametros.put("modo","S");
+													parametros.put("visible","P");
+													Window window = (Window)Executions.createComponents("/WEB-INF/ventanas/catTiposDocumento.zul", null,parametros);
+													window.doModal();
+													if (window.getAttribute("accion").equals("A"))
+													{
+														org.modelo.dto.TipoDocumento tdoc = window.getAttribute("objeto");
+														tipoDocumento.setTipoPadre(tdoc);
+														lblDocPadre.setValue(tdoc.getNombre());
+													}
+												]]>
+											</attribute>
+										</button>
+									</hbox>									
+								</row>
+								<row>
+									<label class="obligatorio" value="${labels.estatus}" />
+									<combobox id="cmbestatus" model="@{estatuss}" selectedItem="@{tipoDocumento.estatus}" value="@{tipoDocumento.estatus}">
+										<comboitem self="@{each=estatu}" label="@{estatu}" value="@{estatu}"/>
+									</combobox>
+								</row>
+								<row spans="2">
+									<label class="obligatorio" value="${labels.datosObligatorios}" />
+								</row>
+							</rows>
+						</grid>
+                  </tabpanel>					
+                  <tabpanel style="overflow:auto">
+						<toolbar mold="default" style="background:#635fa8;">
+							<button label="${labels.nuevo} ${labels.campo}" image="/images/text_field_add.png"  id="Incluir" >
+								<attribute name="onClick">
+									<![CDATA[
+										org.modelo.dto.Campo campo = new org.modelo.dto.Campo();
+										campo.setTipoDocumento(tipoDocumento);
+										campo.asignarOrden();
+										tipoDocumento.getCampos().add(campo);
+										Map parametros = new HashMap();
+										parametros.put("modo","N");
+										parametros.put("objeto",campo);
+										Window window = (Window)Executions.createComponents("/WEB-INF/ventanas/editCampo.zul", null,parametros);
+										window.doModal();
+										if (window.getAttribute("accion").equals("A"))
+										{
+											tipoDocumento.ordenarCamposAsc();
+										}
+										else
+										{
+											tipoDocumento.getCampos().remove(campo);
+										}
+										binder.loadAll();
+									]]>
+								</attribute>
+							</button>
+							<button label="${labels.borrar} ${labels.todos} ${labels.campos} ${labels.seleccionadas}" image="/images/text_field_remove.png" id="EliminarTodo" >
+								<attribute name="onClick">
+									<![CDATA[	
+										if (Messagebox.show("Seguro de Remover Todos Los Elementos Seleccionados?", "Eliminar Todos", Messagebox.OK + Messagebox.CANCEL, Messagebox.INFORMATION) == Messagebox.OK)
+										{
+											for (Listitem li : boxcamp.getSelectedItems())
+											{
+												org.modelo.dto.Campo camp = li.getValue();
+												try
+												{
+										    		tipoDocumento.getCampos().remove(camp);
+												}
+												catch(org.sevenlabs.exception.SevenLabsException e)
+												{
+													alert(e.getMessage());
+												}
+											}
+											binder.loadAll();
+										}
+									]]>
+								</attribute>
+							</button>
+						</toolbar>
+						<listbox id="boxcamp" fixedLayout="true" multiple="true" mold="paging" pageSize="20" width="100%" model="@{tipoDocumento.campos}" checkmark="true">
+    						<listhead>
+    							<listheader width="5%" />
+    							<listheader label="${labels.codigo}" align="center" valign="middle" width="13%" />
+								<listheader label="${labels.nombre}" align="center" valign="middle" width="47%" />
+								<listheader label="${labels.tipo}" align="center" valign="middle" width="20%" />
+								<listheader label="Ops." align="center" valign="middle" width="15%" />
+    						</listhead>
+    						<listitem sclass="row-border item" self="@{each=objeto}" value="@{objeto}">
+    							<attribute name="onCreate">
+									<![CDATA[
+										self.setSelected(false);
+									]]>
+								</attribute>
+    							<listcell/>
+								<listcell label="@{objeto.codigo}"/>
+  								<listcell label="@{objeto.nombre}"/>
+  								<listcell label="@{objeto.tipo}"/>
+  								<listcell>
+  									<attribute name="onClick">
+										<![CDATA[
+											((Listitem)self.getParent()).setSelected(false);
+										]]>
+									</attribute>
+  									<image tooltiptext="${labels.editar} ${labels.campo}" src="/images/text_field_edit.png" id="Editar" width="18px" height="18px">
+										<attribute name="onClick">
+											<![CDATA[
+												Object objeto = ((Listitem)self.getParent().getParent()).getValue();										
+												Map parametros = new HashMap();
+												parametros.put("modo","E");
+												parametros.put("objeto",objeto);
+												Window window = (Window)Executions.createComponents("/WEB-INF/ventanas/editCampo.zul", null,parametros);
+												window.doModal();
+												if (window.getAttribute("accion").equals("A"))
+												{
+													binder.loadAll();
+												}	
+											]]>
+										</attribute>
+									</image>
+									<image tooltiptext="${labels.borrar} ${labels.campo}" src="/images/text_field.png" id="Eliminar" width="18px" height="18px">
+										<attribute name="onClick">
+											<![CDATA[
+												org.modelo.dto.Campo camp = ((Listitem)self.getParent().getParent()).getValue();
+												tipoDocumento.getCampos().remove(camp);
+												binder.loadAll();
+											]]>
+										</attribute>
+									</image>
+									<image tooltiptext="Bajar" src="/images/downarrow_g.png"  width="18px" height="18px">
+										<attribute name="onClick">
+											<![CDATA[
+												org.modelo.dto.Campo campBajar = ((Listitem)self.getParent().getParent()).getValue();
+												if (campBajar.getOrden() < campBajar.getTipoDocumento().getCampos().size())
+												{
+													List listaCampos = new ArrayList(campBajar.getTipoDocumento().getCampos());
+													boolean encontro = false;
+													for(int i = 0; i < listaCampos.size(); i++)
+													{
+														org.modelo.dto.Campo ca = listaCampos.get(i);
+														if (campBajar == ca)
+														{
+															org.modelo.dto.Campo caDes = listaCampos.get(i+1);
+															caDes.setOrden(caDes.getOrden() - 1);
+															ca.setOrden(ca.getOrden() + 1);
+															campBajar.getTipoDocumento().ordenarCamposAsc();
+															binder.loadAll();
+															break;
+														}
+													}
+												}
+											]]>
+										</attribute>
+									</image>
+									<image tooltiptext="Subir" src="/images/uparrow_g.png"  width="18px" height="18px">
+										<attribute name="onClick">
+											<![CDATA[
+												org.modelo.dto.Campo campSubir = ((Listitem)self.getParent().getParent()).getValue();
+												if (campSubir.getOrden() > 1)
+												{
+													List listaCampos = new ArrayList(campSubir.getTipoDocumento().getCampos());
+													boolean encontro = false;
+													for(int i = 0; i < listaCampos.size(); i++)
+													{
+														org.modelo.dto.Campo ca = listaCampos.get(i);
+														if (campSubir == ca)
+														{
+															org.modelo.dto.Campo caAnt = listaCampos.get(i-1);
+															caAnt.setOrden(caAnt.getOrden() + 1);
+															ca.setOrden(ca.getOrden() - 1);
+															campSubir.getTipoDocumento().ordenarCamposAsc();
+															binder.loadAll();
+															break;
+														}
+													}
+												}
+											]]>
+										</attribute>
+									</image>
+  								</listcell>
+    						</listitem>
+						</listbox>
+                	</tabpanel>
+				</tabpanels>
+			</tabbox>
+		</div>
+		<div align="right" height="10%" style="background:#635fa8">
+			<button id="btnAceptar" label="${labels.aceptar}" image="/images/aceptar.png" orient="vertical">
+				<attribute name="onClick">
+					<![CDATA[
+						try
+						{
+							servicioAdministrarConfiguracion.verificarTipoDocumento(tipoDocumento);
+							servicioAdministrarConfiguracion.guardarTipoDocumento(tipoDocumento);
+							alert("Datos Guardados con Exito");
+							editTipoDocumento.setAttribute("accion","A");
+							editTipoDocumento.detach();
+						}
+						catch (org.sevenlabs.exception.SevenLabsException sle)
+						{
+							alert(sle.getMessage());
+						}
+					]]>
+				</attribute>
+			</button>
+			<button id="btnCancelar" label="${labels.cancelar}" image="/images/remover.png" orient="vertical">
+				<attribute name="onClick">
+					<![CDATA[
+					         tipoDocumento.setCampos(listaOriginal);
+						editTipoDocumento.setAttribute("accion","C");
+						editTipoDocumento.detach();
+					]]>
+				</attribute>
+			</button>
+		</div>
+	</window>
+</zk>

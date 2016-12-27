@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?variable-resolver class="org.zkoss.zkplus.spring.DelegatingVariableResolver"?>
+<?init class="org.zkoss.zkplus.databind.AnnotateDataBinderInit" arg0="./lstTareas"?>
+
+<zk xmlns:n="http://www.zkoss.org/2005/zk/native">
+
+	<zscript src="/WEB-INF/commons/configureContext.zs" />
+	<zscript src="/WEB-INF/commons/configureSecurity.zs" />
+
+	<zscript>
+    	<![CDATA[    
+    	   
+            List objetosTareas = new ArrayList();
+            void doLoadData()
+            {
+            	objetosTareas = servicioAdministrarConfiguracion.buscarTodasTareasPorUsuario(usuario);
+            	if (objetosTareas.size() == 0) {
+            		alert("No Tasks Earrings");
+        		}
+                binder.loadAll();
+            }
+            
+        ]]>
+    </zscript>
+
+	<panel title="Mis Tareas"  height="580px" border="normal" closable="true" id="lstTareas">
+		<panelchildren style="padding : 5px;" >
+    	
+    				<borderlayout>
+    					<center autoscroll="true">
+    						<grid preloadSize="14" model="@{objetosTareas}" mold="paging" pageSize="14">
+								<columns sizable="true">
+									<column
+										label="No" align="center" valign="middle"
+										width="8%" />
+									<column
+										label="Fecha" align="center" valign="middle"
+										width="11%" />
+									<column
+										label="Tipo" align="center" valign="middle"
+										width="12%" />
+									<column
+										label="Usuario Actual" align="center" valign="middle"
+										width="30%" />
+									<column
+										label="Estado" align="center" valign="middle"
+										width="20%" />
+									<column
+										label="Tiempo" align="center" valign="middle"
+										width="10%" />
+									<column
+										label="Oper" align="center" valign="middle" width="9%"/>
+								</columns>
+								<rows>
+									<row self="@{each=objetoRow}" value="@{objetoRow}">
+										<label
+											value="@{objetoRow.idtarea}">
+										</label>
+										<label
+											value="@{objetoRow.fecha, converter='org.zkforge.converters.DateCustom'}" >
+											<custom-attributes
+												format="MM/dd/yy" />
+										</label>
+										<label
+											value="@{objetoRow.tipoTarea}"/>
+										<label
+											value="@{objetoRow.usuario.nombreCompleto}"/>
+										<label
+											value="@{objetoRow.estado}"
+											style="font-weight: bold; color :red;">
+										</label>
+										<label
+											value="@{objetoRow.tiempoEspera}">
+										</label>
+										<hbox
+											spacing="5px">
+											<toolbarbutton
+												style="font-size: 9px; font-weight: normal;"
+												use="org.sevenlabs.vista.zk.controls.BotonAcciones"
+												objeto="@{objetoRow}"
+												image="/images/arrow.png"
+												tooltiptext="Ejecutar Tarea">
+												<attribute name="onClick">
+													<![CDATA[
+													{
+														c = event.target;
+								        	        	org.sevenlabs.modelo.utils.Tarea objetoT = c.objeto;;
+								        				Map parametros = new HashMap();
+								        				parametros.put("modo","E");
+								        				String ruta;
+								        				if (objetoT.objeto instanceof org.sevenlabs.modelo.dto.Acuerdo)
+								        				{
+								        					parametros.put("acuerdo",objetoT.objeto);
+								        					ruta = "/WEB-INF/ventanas/editAcuerdo.zul";
+								        				}
+								        				
+								        				Window window = (Window)Executions.createComponents(ruta, null,parametros);
+								        				window.doModal();
+								        				if (window.getAttribute("accion").trim().equals("A")) {
+								        					objetosNotificaciones.clear();
+								        					doLoadData();
+								        				}
+													}
+													]]>
+												</attribute>
+											</toolbarbutton>
+										</hbox>
+									</row>
+								</rows>
+							</grid>
+							
+						</center>
+					</borderlayout>
+		</panelchildren>
+	</panel>
+	<zscript>
+		<![CDATA[
+			doLoadData();
+        ]]>
+		</zscript>
+</zk>

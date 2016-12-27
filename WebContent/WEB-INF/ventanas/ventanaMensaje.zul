@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?variable-resolver class="org.zkoss.zkplus.spring.DelegatingVariableResolver"?>
+
+<?init class="org.zkoss.zkplus.databind.AnnotateDataBinderInit" arg0="./ventanaMensaje" ?>
+
+
+<zk xmlns:n="http://www.zkoss.org/2005/zk/native">
+
+	<zscript src="/WEB-INF/commons/configureContext.zs" />
+	<zscript>
+		<![CDATA[
+String mensaje = arg.get("mensaje");
+String titulo = arg.get("titulo");
+				]]>
+				</zscript>
+	<window id="ventanaMensaje" title="${titulo}"
+		maximizable="true" border="normal" width="400px" height="150px">
+		<caption image="/images/window.png" />
+		<style src="/css/mystyle.css" dynamic="true" />
+		<div height="85%" align="center" >
+			<separator></separator>
+			<separator></separator>
+			<separator></separator>
+			<label value="${mensaje}" style="font-size:12px;font-weight: bold" ></label>
+		</div>
+		<div align="center" height="15%" style="background:#fb4e4e">
+			<button id="btnAceptar" label="Aceptar" orient="vertical" autodisable="self" >
+				<attribute name="onClick">
+				ventanaMensaje.detach();
+			</attribute>
+			</button>
+
+		</div>
+	</window>
+</zk>

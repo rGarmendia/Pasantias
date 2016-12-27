@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?variable-resolver class="org.zkoss.zkplus.spring.DelegatingVariableResolver"?>
+<?init class="org.zkoss.zkplus.databind.AnnotateDataBinderInit" arg0="./catAreas"?>
+
+
+<zk xmlns:n="http://www.zkoss.org/2005/zk/native">
+
+	<zscript src="/WEB-INF/commons/configureContext.zs" />
+
+	<zscript>
+<![CDATA[
+	
+	Object entidadCatalogo = null;
+	String modo = arg.get("modo");
+	org.modelo.dto.Area area = arg.get("area");
+	
+	List areas = new ArrayList();
+	
+	if (modo.equals("A"))
+	{
+		areas = servicioAdministrarConfiguracion.buscarAreasTodas();
+	}
+	else if (modo.equals("S"))
+	{
+		areas = new ArrayList(area.getSubAreas());
+	}
+]]>
+</zscript>
+
+	<window id="catAreas" title="Areas" maximizable="false" border="normal"
+		width="60%" height="550px">
+		<caption image="/images/window.png" />
+				<div height="88%">
+								<panel title="" height="90%"
+							border="normal" collapsible="false">
+							<panelchildren>
+								<borderlayout>
+									<center autoscroll="true">
+										<listbox id="lstbox"
+											model="@{areas}" selectedItem="@{entidadCatalogo}"
+											 mold="paging" pageSize="50" multiple="false">
+											<listhead sizable="true">
+												<listheader width="100%" label="Nombre" align="center"/>
+											</listhead>
+											<listitem
+												sclass="row-border item" self="@{each=actualCatalogo}" value="@{actualCatalogo}">
+												<listcell
+													label="@{actualCatalogo.nombre}" />
+											</listitem>
+										</listbox>
+									</center>
+								</borderlayout>
+							</panelchildren>
+						</panel>
+				</div>
+
+				<div align="right" height="12%" style="background:#635fa8">
+					<button id="btnAceptar" label="Aceptar"
+						image="/images/aceptar.png" orient="vertical">
+						<attribute name="onClick">
+							<![CDATA[
+								catAreas.setAttribute("objeto",lstbox.getSelectedItem().getValue());
+								catAreas.setAttribute("accion","A");
+								catAreas.detach();
+							]]>
+						</attribute>
+					</button>
+					<button id="btnCancelar" label="Cancelar"
+						image="/images/remover.png" orient="vertical">
+						<attribute name="onClick">
+							<![CDATA[
+								catAreas.setAttribute("accion","C");
+								catAreas.detach();
+							]]>
+						</attribute>
+					</button>
+				</div>
+		<zscript>
+			<![CDATA[
+
+			]]>
+		 </zscript>
+	</window>
+</zk>

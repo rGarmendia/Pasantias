@@ -1,0 +1,28 @@
+<zk xmlns:h="http://www.w3.org/1999/xhtml" xmlns:zk="http://www.zkoss.org/2005/zk">
+	<borderlayout height="450px">
+		<north border="0" height="70px">
+			<borderlayout>
+				<north border="0">
+					<toolbar sclass="vista" height="30px"
+						style="background:#fb4e4e;padding-top:7px;"
+						self="@{insert(info)}" align="end">
+					</toolbar>			
+				</north>
+				<south border="0">
+					<toolbar sclass="vista" height="30px"
+						style="background:#ffffff;padding-top:7px;"
+						self="@{insert(barra)}" >
+					</toolbar>			
+				</south>
+			</borderlayout>
+		</north>
+		<center autoscroll="true" self="@{insert(areatrabajo)}">
+		</center>
+		<south border="0">
+			<toolbar sclass="vista" height="30px"
+				style="background:#fb4e4e;padding-top:7px;" align="end"
+				self="@{insert(pie)}">
+			</toolbar>
+		</south>
+	</borderlayout>
+</zk>

@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?variable-resolver class="org.zkoss.zkplus.spring.DelegatingVariableResolver"?>
+<?init class="org.zkoss.zkplus.databind.AnnotateDataBinderInit"  arg0="./editArea" ?>
+
+<zk xmlns:n="http://www.zkoss.org/2005/zk/native"
+	xmlns:h="http://www.w3.org/1999/xhtml">
+
+
+	<zscript src="/WEB-INF/commons/configureContext.zs" />
+	<zscript src="/WEB-INF/commons/configureDialog.zs" />
+
+	<zscript>
+		<![CDATA[
+		     
+			org.modelo.dto.Area area = arg.get("objeto");
+			String modo = arg.get("modo");
+			
+			List estatuss= new ArrayList();
+			estatuss.add("Activa");
+			estatuss.add("Inactiva");
+		]]>						
+	</zscript>
+	<window id="editArea" title="Area" maximizable="false" maximized="false" border="normal" width="650px" height="370px">
+		<caption image="/images/window.png" />
+		<style src="/css/mystyle.css" dynamic="true" />
+		<div height="80%">
+			<textbox visible="false" />
+			<tabbox orient="horizontal">
+				<tabs width="120px">
+					<tab label="${labels.datosGenerales}" />
+					<tab label="Sub Areas" />
+				</tabs>
+				<tabpanels>
+					<tabpanel>
+						<grid>
+							<columns>
+								<column width="20%" align="right" />
+								<column width="80%" />
+							</columns>
+							<rows>
+								<row> 
+									<label class="obligatorio" value="${labels.codigo}" />
+									<label value="@{area.codigo}" if="${modo eq 'E'}"/>
+									<textbox maxlength="10" id="txtcodigo" cols="10" value="@{area.codigo}" if="${modo eq 'N'}"/>
+								</row>
+								<row >
+									<label class="obligatorio" value="${labels.nombre}" />
+									<textbox maxlength="60" id="txtnombre" cols="60" value="@{area.nombre}"/>									
+								</row>
+								<row>
+									<label value="${labels.descripcion}" />
+									<textbox maxlength="200" id="txtfuncion" cols="50" rows="4" value="@{area.descripcion}"/>									
+								</row>
+								<row>
+									<label class="obligatorio" value="${labels.estatus}" />
+									<combobox id="cmbestatus" model="@{estatuss}" selectedItem="@{area.estatus}" value="@{area.estatus}">
+										<comboitem self="@{each=estatu}" label="@{estatu}" value="@{estatu}"/>
+									</combobox>
+								</row>
+								<row spans="2">
+									<label class="obligatorio" value="${labels.datosObligatorios}" />
+								</row>
+							</rows>
+						</grid>
+                  </tabpanel>					
+                  <tabpanel>
+						<toolbar mold="default" style="background:#635fa8;">
+							<button label="${labels.nueva} Sub Area" image="/images/incluir.png"  id="Incluir" >
+								<attribute name="onClick">
+									<![CDATA[
+										org.modelo.dto.Area objeto = new org.modelo.dto.Area();
+										objeto.setAreaPadre(area);
+										area.getSubAreas().add(objeto);
+										Map parametros = new HashMap();
+										parametros.put("modo","N");
+										parametros.put("objeto",objeto);
+										Window window = (Window)Executions.createComponents("/WEB-INF/ventanas/editSubArea.zul", null,parametros);
+										window.doModal();
+										if (window.getAttribute("accion").equals("A"))
+										{
+											binder.loadAll();
+										}
+										
+									]]>
+								</attribute>
+							</button>
+							<button label="${labels.borrar} ${labels.todas} Sub Areas ${labels.seleccionadas}" image="/images/borrar.png" id="EliminarTodo" >
+								<attribute name="onClick">
+									<![CDATA[
+										Set items = box.getSelectedItems();
+										if (items.size() == 0)
+										{
+											Messagebox.show("Debe Seleccionar Al menos un Registro","Eliminar", Messagebox.OK,Messagebox.INFORMATION);
+										}
+										else
+										{
+										}	
+									]]>
+								</attribute>
+							</button>
+						</toolbar>
+						<listbox fixedLayout="true" multiple="true" mold="paging" pageSize="20" width="100%" model="@{area.subAreas}" >
+    						<listhead>
+    							<listheader label="Codigo" align="center" valign="middle" width="20%" />
+								<listheader label="${labels.nombre}" align="center" valign="middle" width="70%" />
+								<listheader label="Ops." align="center" valign="middle" width="10%" />
+    						</listhead>
+    						<listitem sclass="row-border item" self="@{each=objeto}" value="@{objeto}">
+								<listcell label="@{objeto.codigo}"/>
+  								<listcell label="@{objeto.nombre}"/>
+  								<listcell>
+  									<image tooltiptext="${labels.editar} Sub Area" src="/images/editar.png" id="Editar" width="18px" height="18px">
+										<attribute name="onClick">
+											<![CDATA[
+												Object objeto = ((Listitem)self.getParent().getParent()).getValue();										
+												Map parametros = new HashMap();
+												parametros.put("modo","E");
+												parametros.put("objeto",objeto);
+												Window window = (Window)Executions.createComponents("/WEB-INF/ventanas/editSubArea.zul", null,parametros);
+												window.doModal();
+												if (window.getAttribute("accion").equals("A"))
+												{
+													binder.loadAll();
+												}	
+											]]>
+										</attribute>
+									</image>
+									<image tooltiptext="${labels.borrar} Area" src="/images/borrar.png" id="Eliminar" width="18px" height="18px">
+										<attribute name="onClick">
+											<![CDATA[	
+											]]>
+										</attribute>
+									</image>
+  								</listcell>
+    						</listitem>
+						</listbox>
+                	</tabpanel>
+				</tabpanels>
+			</tabbox>
+		</div>
+		<div align="right" height="20%" style="background:#635fa8">
+			<button id="btnAceptar" label="${labels.aceptar}" image="/images/aceptar.png" orient="vertical">
+				<attribute name="onClick">
+					<![CDATA[
+						try
+						{
+							//servicioAdministrarConfiguracion.verificarArea(area);
+							servicioAdministrarConfiguracion.guardarArea(area);
+							alert("Datos Guardados con Exito");
+							editArea.setAttribute("accion","A");
+							editArea.detach();
+						}
+						catch (org.sevenlabs.exception.SevenLabsException sle)
+						{
+							alert(sle.getMessage());
+						}
+					]]>
+				</attribute>
+			</button>
+			<button id="btnCancelar" label="${labels.cancelar}" image="/images/remover.png" orient="vertical">
+				<attribute name="onClick">
+					<![CDATA[
+						editArea.setAttribute("accion","C");
+						editArea.detach();
+					]]>
+				</attribute>
+			</button>
+		</div>
+	</window>
+</zk>

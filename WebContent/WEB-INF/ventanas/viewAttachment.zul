@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?variable-resolver class="org.zkoss.zkplus.spring.DelegatingVariableResolver"?>
+
+<zk xmlns:n="http://www.zkoss.org/2005/zk/native"
+	xmlns:h="http://www.w3.org/1999/xhtml">
+
+
+	<zscript src="/WEB-INF/commons/configureContext.zs" />
+	<zscript src="/WEB-INF/commons/configureDialog.zs" />
+
+	<zscript>
+		<![CDATA[
+			//org.modelo.dto.Proyecto proyecto = arg.get("proyecto");
+			byte[] archivo = arg.get("archivo");
+			String nombreArchivo = arg.get("nombreArchivo");
+		]]>						
+		
+	</zscript>
+
+	<window id="pdfwindow" width="90%" height="100%" title="Adjunto Proyecto" border="normal" mode="modal" 
+		closable="true" maximizable="true"  onClose="close()">
+		
+		<iframe id="pdfwindow_iframe" height="100%" width="100%" />
+		
+	<zscript language="Java"><![CDATA[
+
+	
+	void close(){
+		pdfwindow.detach();
+	}
+	org.zkoss.util.media.AMedia amedia = new org.zkoss.util.media.AMedia(nombreArchivo,"pdf", "application/pdf", archivo);
+	pdfwindow_iframe.setContent(amedia);
+
+]]>
+</zscript>
+	</window>
+</zk>

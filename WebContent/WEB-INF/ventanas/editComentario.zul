@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?variable-resolver class="org.zkoss.zkplus.spring.DelegatingVariableResolver"?>
+<?init class="org.zkoss.zkplus.databind.AnnotateDataBinderInit"  arg0="./editComentario" ?>
+
+<zk xmlns:n="http://www.zkoss.org/2005/zk/native"
+	xmlns:h="http://www.w3.org/1999/xhtml">
+
+
+	<zscript src="/WEB-INF/commons/configureContext.zs" />
+	<zscript src="/WEB-INF/commons/configureDialog.zs" />
+
+	<zscript>
+	<![CDATA[
+		String titulo = arg.get("titulo");
+		]]>						
+		
+	</zscript>
+
+	<window id="editComentario" title="Comentarios y/o Razones" maximizable="false"
+		maximized="false" border="normal" width="600px">
+		<caption image="/images/window.png" />
+		<style src="/css/mystyle.css" dynamic="true" />
+		<div height="85%">
+			<textbox visible="false" />
+						<grid>
+							<columns>
+								<column width="30%" align="right" />
+								<column width="70%" />
+							</columns>
+							<rows>
+								<row>
+									<label value="${titulo}" />
+									<textbox id="comentario" maxlength="500" cols="50" rows="10"/>
+								</row>	
+							</rows>
+						</grid>
+		</div>
+		<div align="right" height="15%" style="background:#c5e6ef">
+			<button id="btnAceptar" label="Aceptar"
+				image="/images/aceptar.png" orient="vertical">
+				<attribute name="onClick">
+				String mensaje = "";
+				
+					if (comentario.getText().trim().equals(""))
+					{
+						mensaje = "Debe Insertar el Comentario";
+					}
+					
+				
+				if (!mensaje.equals(""))
+				{
+					alert(mensaje);
+				}
+				else
+				{
+					try
+					{
+						editComentario.setAttribute("accion","A");
+						editComentario.setAttribute("comentario",comentario.getText());
+						editComentario.detach();						
+					}
+					catch(Exception ex)
+					{
+						Messagebox
+				.show(ex.getMessage(), "Error", Messagebox.OK, Messagebox.ERROR);
+					}
+				}
+				</attribute>
+			</button>
+			<button id="btnCancelar" label="Cancelar"
+				image="/images/remover.png" orient="vertical">
+				<attribute name="onClick">
+				{
+					editComentario.setAttribute("accion","C");
+					editComentario.detach();
+				}
+				</attribute>
+			</button>
+		</div>
+
+		<zscript>
+		<![CDATA[
+		      
+				]]>	
+			</zscript>
+
+
+	</window>
+
+
+</zk>

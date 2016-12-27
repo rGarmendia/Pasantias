@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?variable-resolver class="org.zkoss.zkplus.spring.DelegatingVariableResolver"?>
+<?init class="org.zkoss.zkplus.databind.AnnotateDataBinderInit"  arg0="./editRol" ?>
+
+<zk xmlns:n="http://www.zkoss.org/2005/zk/native"
+	xmlns:h="http://www.w3.org/1999/xhtml">
+
+
+	<zscript src="/WEB-INF/commons/configureContext.zs" />
+	<zscript src="/WEB-INF/commons/configureDialog.zs" />
+
+	<zscript>
+		<![CDATA[
+		     
+			org.modelo.dto.Rol rol = arg.get("objeto");
+			String modo = arg.get("modo");
+
+		]]>						
+	</zscript>
+	<window id="editRol" title="Rol" border="normal" width="650px" height="350px">
+		<caption image="/images/window.png" />
+		<style src="/css/mystyle.css" dynamic="true" />
+		<div height="240px">
+			<textbox visible="false" />
+			<tabbox orient="horizontal">
+				<tabs width="120px">
+					<tab label="${labels.datosGenerales}" />
+				</tabs>
+				<tabpanels>
+					<tabpanel>
+						<grid>
+							<columns>
+								<column width="20%" align="right" />
+								<column width="80%" />
+							</columns>
+							<rows>
+								<row if="${modo eq 'E'}"> 
+									<label class="obligatorio" value="${labels.codigo}" />
+									<label value="@{rol.codigo}" if="${modo eq 'E'}"/>
+								</row>
+								<row >
+									<label class="obligatorio" value="${labels.nombre}" />
+									<textbox maxlength="60" id="txtnombre" cols="60" value="@{rol.nombre}"/>									
+								</row>
+								<row>
+									<label value="${labels.funciones}" />
+									<textbox maxlength="200" id="txtfuncion" cols="50" rows="4" value="@{rol.funciones}"/>									
+								</row>
+								<row spans="2">
+									<label class="obligatorio" value="${labels.datosObligatorios}" />
+								</row>
+							</rows>
+						</grid>
+                  </tabpanel>					
+				</tabpanels>
+			</tabbox>
+		</div>
+		<div align="right" height="110px" style="background:#635fa8;">
+			<button id="btnAceptar" label="${labels.aceptar}" image="/images/aceptar.png" orient="vertical">
+				<attribute name="onClick">
+					<![CDATA[
+						try
+						{
+							servicioAdministrarConfiguracion.guardarRol(rol);
+							alert("Saved Data Successfully");
+							editRol.setAttribute("accion","A");
+							editRol.detach();
+						}
+						catch (org.sevenlabs.exception.SevenLabsException sle)
+						{
+							alert(sle.getMessage());
+						}
+					]]>
+				</attribute>
+			</button>
+			<button id="btnCancelar" label="${labels.cancelar}" image="/images/remover.png" orient="vertical">
+				<attribute name="onClick">
+					<![CDATA[
+						editRol.setAttribute("accion","C");
+						editRol.detach();
+					]]>
+				</attribute>
+			</button>
+		</div>
+	</window>
+</zk>

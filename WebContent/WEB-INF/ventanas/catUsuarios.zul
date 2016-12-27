@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?variable-resolver class="org.zkoss.zkplus.spring.DelegatingVariableResolver"?>
+<?init class="org.zkoss.zkplus.databind.AnnotateDataBinderInit" arg0="./catUsuarios"?>
+
+
+<zk xmlns:n="http://www.zkoss.org/2005/zk/native">
+
+	<zscript src="/WEB-INF/commons/configureContext.zs" />
+
+	<zscript>
+<![CDATA[
+	
+	Object entidadCatalogo = null;
+	List usuarios = new ArrayList();
+	String seleccion = arg.get("seleccion");
+	
+	Comparator cNombresAsc = new Comparator() {
+		public int compare(org.modelo.dto.Usuario i1, org.modelo.dto.Usuario i2) {
+			if (i1.getNombres() == null || i2.getNombres() == null)
+			{
+				return 0;
+			}
+			else
+			{
+				return i1.getNombres().compareTo(i2.getNombres());
+			}
+		}
+	};
+	Comparator cApellidosAsc = new Comparator() {
+		public int compare(org.modelo.dto.Usuario i1, org.modelo.dto.Usuario i2) {
+			if (i1.getApellidos() == null || i2.getApellidos() == null)
+			{
+				return 0;
+			}
+			else
+			{
+				return i1.getApellidos().compareTo(i2.getApellidos());
+			}
+		}
+	};
+	
+	Comparator cNombresDes = new Comparator() {
+		public int compare(org.modelo.dto.Usuario i1, org.modelo.dto.Usuario i2) {
+			if (i1.getNombres() == null || i2.getNombres() == null)
+			{
+				return 0;
+			}
+			else
+			{
+				return i1.getNombres().compareTo(i2.getNombres()) * -1;
+			}
+		}
+	};
+	Comparator cApellidosDes = new Comparator() {
+		public int compare(org.modelo.dto.Usuario i1, org.modelo.dto.Usuario i2) {
+			if (i1.getApellidos() == null || i2.getApellidos() == null)
+			{
+				return 0;
+			}
+			else
+			{
+				return i1.getApellidos().compareTo(i2.getApellidos()) * -1;
+			}
+		}
+	};
+]]>
+</zscript>
+
+	<window id="catUsuarios" title="Usuarios" maximizable="false" border="normal"
+		width="70%" height="700px">
+		<caption image="/images/window.png" />
+				<div height="90%">
+						
+								<hbox align="center" height="10%">
+									<label value="Busqueda: "></label>
+									<radiogroup id="rgrBusqueda" orient="vertical">
+										<radio label="Nombres" value="nombre" checked="true"></radio>
+										<radio label="Apellidos" value="apellido"></radio>
+									</radiogroup>
+									<textbox cols="60" id="txtBusqueda"></textbox>
+									<button label="Buscar" image="/images/search.png">
+										<attribute name="onClick">
+											<![CDATA[
+											    if (!txtBusqueda.getValue().trim().equals(""))
+											    {
+													if (rgrBusqueda.getSelectedItem().getValue().equals("apellido"))
+													{
+														usuarios = servicioAdministrarConfiguracion.buscarUsuariosPorApellidos(txtBusqueda.getValue().trim());
+													}
+													else if (rgrBusqueda.getSelectedItem().getValue().equals("nombre"))
+													{
+														usuarios = servicioAdministrarConfiguracion.buscarUsuariosPorNombres(txtBusqueda.getValue().trim());
+													}
+													binder.loadAll();
+											    }
+											    else
+											    {
+											    	alert("Debe Insertar un Texto a Buscar");
+											    }
+											]]>
+										</attribute>
+									</button>
+									<button label="Buscar Todos" image="/images/search.png">
+										<attribute name="onClick">
+											<![CDATA[
+												usuarios = servicioAdministrarConfiguracion.buscarTodosUsuarios();
+												binder.loadAll();
+											]]>
+										</attribute>
+									</button>
+								</hbox>
+								<panel title="" height="90%"
+							border="normal" collapsible="false">
+							<panelchildren>
+								<borderlayout>
+									<center autoscroll="true">
+										<listbox id="lstbox"
+											model="@{usuarios}" selectedItem="@{entidadCatalogo}"
+											 mold="paging" pageSize="50" multiple="true"
+														checkmark="true" >
+											<listhead sizable="true">												
+												<listheader
+													width="10%" label=""/>
+												<listheader width="40%" label="Nombres"  sortAscending="${cNombresAsc}" sortDescending="${cNombresDes}" align="center"/>
+												<listheader width="40%" label="Apellidos" sortAscending="${cApellidosAsc}" sortDescending="${cApellidosDes}" align="center"/>
+												<listheader width="40%" label="Cargo" sortAscending="${cApellidosAsc}" sortDescending="${cApellidosDes}" align="center"/>
+											</listhead>
+											<listitem
+												sclass="row-border item" self="@{each=actualCatalogo}" value="@{actualCatalogo}">
+												<listcell />
+												<listcell
+													label="@{actualCatalogo.nombres}" />
+												<listcell
+													label="@{actualCatalogo.apellidos}" />
+												<listcell
+													label="" />
+											</listitem>
+										</listbox>
+									</center>
+								</borderlayout>
+							</panelchildren>
+						</panel>
+				</div>
+
+				<div align="right" height="10%" style="background:#635fa8">
+					<button id="btnAceptar" label="Aceptar"
+						image="/images/aceptar.png" orient="vertical">
+						<attribute name="onClick">
+							<![CDATA[
+							         if (seleccion.equals("unica"))
+							         {
+							        	 catUsuarios.setAttribute("objeto",lstbox.getSelectedItem().getValue());
+							         }
+							         else
+							         {
+							        	 catUsuarios.setAttribute("objeto",lstbox.getSelectedItems());
+							         }
+								
+								catUsuarios.setAttribute("accion","A");
+								catUsuarios.detach();
+							]]>
+						</attribute>
+					</button>
+					<button id="btnCancelar" label="Cancelar"
+						image="/images/remover.png" orient="vertical">
+						<attribute name="onClick">
+							<![CDATA[
+								catUsuarios.setAttribute("accion","C");
+								catUsuarios.detach();
+							]]>
+						</attribute>
+					</button>
+				</div>
+		<zscript>
+			<![CDATA[
+
+			]]>
+		 </zscript>
+	</window>
+</zk>

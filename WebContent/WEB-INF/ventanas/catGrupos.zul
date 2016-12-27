@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?variable-resolver class="org.zkoss.zkplus.spring.DelegatingVariableResolver"?>
+<?init class="org.zkoss.zkplus.databind.AnnotateDataBinderInit" arg0="./catGrupos"?>
+
+
+<zk xmlns:n="http://www.zkoss.org/2005/zk/native">
+
+	<zscript src="/WEB-INF/commons/configureContext.zs" />
+
+	<zscript>
+<![CDATA[
+	
+	Object entidadCatalogo = null;
+	List usuarios = new ArrayList();
+	
+	Comparator cNombresAsc = new Comparator() {
+		public int compare(org.modelo.dto.Grupo g1, org.modelo.dto.Grupo g2) {
+			if (g1.getNombre() == null || g2.getNombre() == null)
+			{
+				return 0;
+			}
+			else
+			{
+				return g1.getNombre().compareTo(g2.getNombre());
+			}
+		}
+	};
+	Comparator cNombresDes = new Comparator() {
+		public int compare(org.modelo.dto.Grupo g1, org.modelo.dto.Grupo g2) {
+			if (g1.getNombre() == null || g2.getNombre() == null)
+			{
+				return 0;
+			}
+			else
+			{
+				return g1.getNombre().compareTo(g2.getNombre()) * -1;
+			}
+		}
+	};
+	
+	List grupos = servicioAdministrarConfiguracion.buscarGruposTodos();
+]]>
+</zscript>
+
+	<window id="catGrupos" title="Grupos" maximizable="false" border="normal"
+		width="70%" height="700px">
+		<caption image="/images/window.png" />
+				<div height="90%">
+								<panel title="" height="90%"
+							border="normal" collapsible="false">
+							<panelchildren>
+								<borderlayout>
+									<center autoscroll="true">
+										<listbox id="lstbox"
+											model="@{grupos}" selectedItem="@{entidadCatalogo}"
+											 mold="paging" pageSize="50" multiple="true"
+														checkmark="true" >
+											<listhead sizable="true">												
+												<listheader
+													width="10%" label=""/>
+												<listheader width="90%" label="Nombre"  sortAscending="${cNombresAsc}" sortDescending="${cNombresDes}" align="center"/>
+											</listhead>
+											<listitem
+												sclass="row-border item" self="@{each=actualCatalogo}" value="@{actualCatalogo}">
+												<listcell />
+												<listcell
+													label="@{actualCatalogo.nombre}" />
+											</listitem>
+										</listbox>
+									</center>
+								</borderlayout>
+							</panelchildren>
+						</panel>
+				</div>
+
+				<div align="right" height="10%" style="background:#635fa8">
+					<button id="btnAceptar" label="Aceptar"
+						image="/images/aceptar.png" orient="vertical">
+						<attribute name="onClick">
+							<![CDATA[
+								catGrupos.setAttribute("objeto",lstbox.getSelectedItems());
+								catGrupos.setAttribute("accion","A");
+								catGrupos.detach();
+							]]>
+						</attribute>
+					</button>
+					<button id="btnCancelar" label="Cancelar"
+						image="/images/remover.png" orient="vertical">
+						<attribute name="onClick">
+							<![CDATA[
+								catGrupos.setAttribute("accion","C");
+								catGrupos.detach();
+							]]>
+						</attribute>
+					</button>
+				</div>
+		<zscript>
+			<![CDATA[
+
+			]]>
+		 </zscript>
+	</window>
+</zk>
